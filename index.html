@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MORSE CODE Gadget</title>
+  <meta name="theme-color" content="#0a0c10">
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --board-bg: #14181d;
+      --gold: #c9a227;
+      --gold-bright: #f0c94a;
+      --gold-dim: #5c4711;
+      --green: #39ff88;
+      --red: #ff3333;
+      --text: #ffffff;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+    body {
+      margin: 0; height: 100dvh; background: var(--bg); color: var(--text);
+      font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center;
+      overflow: hidden; position: relative;
+    }
+    
+    header {
+      width: 100%; padding: 10px; display: flex; flex-direction: column; align-items: center;
+      z-index: 10; background: var(--bg);
+    }
+    h1 { font-size: 1.4rem; letter-spacing: 6px; color: var(--gold); margin: 0 0 5px; text-shadow: 0 0 15px rgba(201,162,39,0.6); text-align: center;}
+    
+    #decoded { 
+      font-size: 1.6rem; color: var(--green); 
+      min-height: 1.5em; text-align: center; letter-spacing: 2px; 
+      font-weight: bold; text-shadow: 0 0 15px rgba(57,255,136,0.4);
+      font-family: monospace; display: flex; justify-content: center; gap: 10px;
+      width: 100%; overflow: hidden; white-space: nowrap;
+    }
+    #final-text { color: #fff; text-shadow: none; overflow: hidden; text-overflow: ellipsis; max-width: 70%;}
+    #current-char { color: var(--gold); text-shadow: 0 0 10px rgba(201,162,39,0.5); min-width: 35px;}
+
+    .board-container {
+      width: 100%; flex: 1; display: flex; justify-content: center; align-items: center;
+      padding: 0 10px; overflow: hidden;
+    }
+    
+    #board-svg { width: 100%; height: 100%; display: block; }
+
+    .bottom-bar {
+      width: 100%; max-width: 500px; padding: 15px 20px 30px; 
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--bg); z-index: 10;
+    }
+
+    /* Стиль для боковых кнопок (Пробел и Сброс) - теперь они идентичны */
+    .side-btn {
+      width: 65px; height: 65px; border-radius: 50%;
+      background: linear-gradient(to bottom, #2a3038, #1a1e24); 
+      color: var(--gold); border: 2px solid #4a5058; border-bottom: 5px solid #0a0c10;
+      font-family: sans-serif; font-size: 0.7rem; font-weight: bold; text-align: center; line-height: 1.2;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: transform 0.05s, border-bottom 0.05s;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+      padding: 5px;
+    }
+    .side-btn:active { transform: translateY(3px); border-bottom: 2px solid #0a0c10; }
+
+    .main-key-btn {
+      width: 95px; height: 95px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #4a5058, #1a1e24);
+      border: 3px solid #5a6068; border-bottom: 8px solid #0a0c10;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.8), inset 0 2px 5px rgba(255,255,255,0.1);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: transform 0.05s, border-bottom 0.05s;
+      position: relative;
+    }
+    .main-key-btn::after {
+      content: ''; width: 40px; height: 40px; border-radius: 50%;
+      background: #2a3038; box-shadow: inset 0 3px 6px rgba(0,0,0,0.8);
+      transition: background 0.1s;
+    }
+    .main-key-btn.active {
+      transform: translateY(5px); border-bottom: 3px solid #0a0c10;
+      background: radial-gradient(circle at 35% 35%, #5a6068, #2a3038);
+    }
+    .main-key-btn.active::after {
+      background: var(--gold-bright); box-shadow: 0 0 25px var(--gold-bright);
+    }
+
+    .drawer-handle {
+      position: absolute; bottom: 0; left: 0; width: 100%; height: 20px;
+      display: flex; justify-content: center; align-items: flex-end; padding-bottom: 3px;
+      cursor: pointer; z-index: 10;
+    }
+    .drawer-handle-bar { width: 60px; height: 4px; border-radius: 2px; background: #3a4048; }
+    
+    .drawer {
+      position: absolute; bottom: 0; left: 0; width: 100%; height: 60vh;
+      background: linear-gradient(to top, #14181d, #0e1115);
+      border-top: 1px solid #2a3038; border-radius: 24px 24px 0 0;
+      transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100; display: flex; flex-direction: column; padding: 20px;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+    }
+    .drawer.open { transform: translateY(0); }
+    
+    .drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .drawer-header h2 { margin: 0; color: var(--gold); font-size: 1.1rem; letter-spacing: 2px; }
+    .close-drawer { background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer; }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;}
+    button.tool-btn {
+      background: linear-gradient(to bottom, #2a3038, #1a1e24); 
+      color: var(--gold); border: 1px solid #3a4048; border-bottom: 3px solid #0a0c10;
+      border-radius: 10px; padding: 12px; font-family: inherit; font-size: 1rem; font-weight: bold;
+      cursor: pointer; transition: transform 0.05s;
+    }
+    button.tool-btn:active { transform: translateY(2px); border-bottom: 1px solid #0a0c10; }
+    
+    .settings { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; font-size: .9rem; }
+    .setting-row { display: flex; justify-content: space-between; align-items: center; }
+    input[type=range] { width: 150px; accent-color: var(--green); }
+    #status { font-size: .8rem; color: #7a828c; margin-top: 15px; text-align: center;}
+
+    /* --- SVG Стили --- */
+    .pcb-bg { fill: #12161a; }
+    .pcb-dots { fill: #1c2228; }
+    
+    .pcb-trace { fill: none; stroke: var(--gold-dim); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.15s, stroke-width 0.15s; }
+    .pcb-trace.active { stroke: var(--gold-bright); stroke-width: 6; filter: drop-shadow(0 0 8px var(--gold-bright)); }
+    
+    .pad-shape { fill: #12161a; stroke: var(--gold); stroke-width: 4; transition: all 0.15s; }
+    .pad-shape.rect-shape.active { fill: var(--red); stroke: #fff; filter: drop-shadow(0 0 12px var(--red)); }
+    .pad-shape.circle-shape.active { fill: var(--green); stroke: #fff; filter: drop-shadow(0 0 12px var(--green)); }
+    
+    #led-red-top.blink-green { fill: var(--green); stroke: #fff; filter: drop-shadow(0 0 15px var(--green)); }
+    #led-red-top.blink-red { fill: var(--red); stroke: #fff; filter: drop-shadow(0 0 15px var(--red)); }
+
+    .pad-text { fill: var(--text); font-family: 'Arial Black', Impact, sans-serif; font-size: 24px; font-weight: 900; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+    .board-title { fill: #7a828c; font-family: sans-serif; font-size: 24px; font-weight: bold; letter-spacing: 4px; opacity: 0.8;}
+    .antenna { stroke: #7a828c; fill: none; stroke-width: 3; }
+    
+    #torch-fallback { position: fixed; inset: 0; background: #fff; z-index: 999; display: none; pointer-events: none; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>MORSE CODE</h1>
+    <div id="decoded">
+      <span id="final-text"></span>
+      <span id="current-char">—</span>
+    </div>
+  </header>
+
+  <div class="board-container">
+    <!-- ViewBox увеличен по ширине для идеального размещения без наложений -->
+    <svg id="board-svg" viewBox="0 0 1000 850" preserveAspectRatio="xMidYMid meet">
+      <rect width="1000" height="850" class="pcb-bg" />
+      <pattern id="pcb-dots" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
+        <circle cx="2" cy="2" r="2" class="pcb-dots"></circle>
+      </pattern>
+      <rect width="1000" height="850" fill="url(#pcb-dots)"></rect>
+      
+      <text x="60" y="60" class="board-title">MORSE</text>
+      <text x="820" y="60" class="board-title">CODE</text>
+      <circle id="led-red-top" cx="940" cy="50" r="14" class="pad-shape circle-shape"></circle>
+      <path class="antenna" d="M 500 30 L 500 60 M 480 60 L 520 60 M 485 75 L 515 75 L 500 60 Z"></path>
+
+      <g id="traces-group"></g>
+      <g id="components-group"></g>
+    </svg>
+  </div>
+
+  <div class="bottom-bar">
+    <!-- Убран зеленый стиль, теперь кнопка как СБРОС -->
+    <button id="btn-space" class="side-btn">ПРО-<br>БЕЛ</button>
+    <button id="morse-key" class="main-key-btn" aria-label="Morse Key"></button>
+    <button id="btn-reset" class="side-btn">СБРОС</button>
+  </div>
+
+  <div class="drawer-handle" id="drawer-handle"><div class="drawer-handle-bar"></div></div>
+
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <h2>TOOLS</h2>
+      <button class="close-drawer" id="close-drawer">✕</button>
+    </div>
+    
+    <div class="controls">
+      <button class="tool-btn" id="btn-sos">SOS</button>
+      <button class="tool-btn" id="btn-cq">CQ</button>
+      <button class="tool-btn" id="btn-torch">🔦 Фонарик</button>
+      <button class="tool-btn" id="btn-mic">🎤 Микрофон</button>
+    </div>
+    
+    <div class="settings">
+      <div class="setting-row">
+        <label>Тон: <span id="tone-val">700 Гц</span></label>
+        <input type="range" id="tone" min="400" max="1000" value="700" step="50">
+      </div>
+      <div class="setting-row">
+        <label>Громкость:</label>
+        <input type="range" id="vol" min="0" max="1" value="0.5" step="0.1">
+      </div>
+    </div>
+    
+    <div id="status">Удерживайте KEY для ТИРЕ, короткое нажатие для ТОЧКИ.</div>
+  </div>
+
+  <div id="torch-fallback"></div>
+
+  <script>
+    /* ================== 1. ИДЕАЛЬНАЯ СЕТКА БЕЗ НАЛОЖЕНИЙ ================== */
+    // Листья: Q, Z, Y, C, X, B, P, J, L, F, H, V.
+    // Расстояние между соседними листьями = 70px (ширина элемента = 64px).
+    const NODES = {
+      'root': { x: 500, y: 120, shape: 'none', code: '', parent: null },
+      
+      // Уровень 1
+      'T': { x: 250, y: 260, shape: 'rect-h', code: '-', parent: 'root' },
+      'E': { x: 750, y: 260, shape: 'led', code: '.', parent: 'root' },
+      
+      // Уровень 2
+      'M': { x: 150, y: 400, shape: 'rect-h', code: '--', parent: 'T' },
+      'N': { x: 350, y: 400, shape: 'circle', code: '-.', parent: 'T' },
+      'A': { x: 650, y: 400, shape: 'rect-v', code: '.-', parent: 'E' },
+      'I': { x: 850, y: 400, shape: 'led', code: '..', parent: 'E' },
+      
+      // Уровень 3
+      'O': { x: 100, y: 540, shape: 'rect-h', code: '---', parent: 'M' },
+      'G': { x: 200, y: 540, shape: 'circle', code: '--.', parent: 'M' },
+      'K': { x: 300, y: 540, shape: 'rect-h', code: '-.-', parent: 'N' },
+      'D': { x: 400, y: 540, shape: 'circle', code: '-..', parent: 'N' },
+      'W': { x: 600, y: 540, shape: 'rect-v', code: '.--', parent: 'A' },
+      'R': { x: 700, y: 540, shape: 'circle', code: '.-.', parent: 'A' },
+      'U': { x: 800, y: 540, shape: 'rect-v', code: '..-', parent: 'I' },
+      'S': { x: 900, y: 540, shape: 'led', code: '...', parent: 'I' },
+      
+      // Уровень 4 (Листья, шаг 70px)
+      'Q': { x: 165, y: 680, shape: 'rect-h', code: '--.-', parent: 'G' },
+      'Z': { x: 235, y: 680, shape: 'circle', code: '--..', parent: 'G' },
+      'Y': { x: 305, y: 680, shape: 'rect-h', code: '-.--', parent: 'K' },
+      'C': { x: 375, y: 680, shape: 'circle', code: '-.-.', parent: 'K' },
+      'X': { x: 445, y: 680, shape: 'rect-h', code: '-..-', parent: 'D' },
+      'B': { x: 515, y: 680, shape: 'circle', code: '-...', parent: 'D' },
+      'P': { x: 585, y: 680, shape: 'circle', code: '.--.', parent: 'W' },
+      'J': { x: 655, y: 680, shape: 'rect-v', code: '.---', parent: 'W' },
+      'L': { x: 725, y: 680, shape: 'circle', code: '.-..', parent: 'R' },
+      'F': { x: 795, y: 680, shape: 'circle', code: '..-.', parent: 'U' },
+      'H': { x: 865, y: 680, shape: 'led', code: '....', parent: 'S' },
+      'V': { x: 935, y: 680, shape: 'rect-v', code: '...-', parent: 'S' }
+    };
+
+    const MORSE_MAP = {};
+    Object.keys(NODES).forEach(k => {
+      if (k !== 'root' && NODES[k].code) MORSE_MAP[k] = NODES[k].code;
+    });
+
+    /* ================== 2. ГЕНЕРАЦИЯ SVG ================== */
+    const tracesGroup = document.getElementById('traces-group');
+    const compGroup = document.getElementById('components-group');
+    const NS = 'http://www.w3.org/2000/svg';
+
+    function drawTraces() {
+      tracesGroup.innerHTML = '';
+      Object.keys(NODES).forEach(char => {
+        if (char === 'root') return;
+        const node = NODES[char];
+        const parent = NODES[node.parent];
+        if (!parent) return;
+
+        let d = '';
+        if (parent.x === node.x) {
+          d = `M ${parent.x} ${parent.y} L ${node.x} ${node.y}`;
+        } else if (parent.y === node.y) {
+          d = `M ${parent.x} ${parent.y} L ${node.x} ${node.y}`;
+        } else {
+          // ИСПРАВЛЕНО: Сдвиг стволов влево/вправо, чтобы они не сливались в пучок
+          const isLeft = node.x < parent.x;
+          const offset = isLeft ? -5 : 5; 
+          const trunkX = parent.x + offset;
+          
+          d = `M ${parent.x} ${parent.y} L ${trunkX} ${parent.y} L ${trunkX} ${node.y} L ${node.x} ${node.y}`;
+        }
+
+        const path = document.createElementNS(NS, 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('class', 'pcb-trace');
+        path.id = `trace-${node.parent}-${char}`;
+        tracesGroup.appendChild(path);
+      });
+    }
+
+    function drawComponents() {
+      compGroup.innerHTML = '';
+      Object.keys(NODES).forEach(char => {
+        if (char === 'root') return;
+        const node = NODES[char];
+        
+        const g = document.createElementNS(NS, 'g');
+        g.style.cursor = 'pointer';
+        
+        // Последовательное зажигание при клике
+        g.addEventListener('click', async () => {
+          clearTimeout(inputTimer);
+          currentCharEl.classList.remove('finalizing');
+          resetLights();
+
+          let path = [];
+          let curr = char;
+          while (curr !== 'root') {
+            path.unshift(curr);
+            curr = NODES[curr].parent;
+          }
+
+          for (let i = 0; i < path.length; i++) {
+            const stepChar = path[i];
+            const stepNode = NODES[stepChar];
+            const parentChar = stepNode.parent;
+
+            const nodeEl = document.getElementById(`node-${stepChar}`);
+            if (nodeEl) nodeEl.classList.add('active');
+            
+            const traceEl = document.getElementById(`trace-${parentChar}-${stepChar}`);
+            if (traceEl) traceEl.classList.add('active');
+
+            const sym = stepNode.code.slice(-1);
+            if (sym === '.') {
+              playTone(100, 'dot');
+              await sleep(200);
+            } else {
+              playTone(300, 'dash');
+              await sleep(400);
+            }
+          }
+
+          await sleep(500);
+          resetLights();
+        });
+
+        const txt = document.createElementNS(NS, 'text');
+        let textX = node.x;
+        let textY = node.y - 28; 
+        
+        if (node.shape === 'rect-v') { textX = node.x + 28; textY = node.y; } 
+        else if (node.shape === 'circle' || node.shape === 'led') { textX = node.x; textY = node.y - 28; } 
+        else if (node.shape === 'rect-h') { textX = node.x; textY = node.y - 24; }
+
+        txt.setAttribute('x', textX);
+        txt.setAttribute('y', textY);
+        txt.setAttribute('class', 'pad-text');
+        txt.id = `text-${char}`;
+        txt.textContent = char;
+
+        if (node.shape === 'led' || node.shape === 'circle') {
+          const circle = document.createElementNS(NS, 'circle');
+          circle.setAttribute('cx', node.x); circle.setAttribute('cy', node.y);
+          circle.setAttribute('r', 18);
+          circle.setAttribute('class', 'pad-shape circle-shape');
+          circle.id = `node-${char}`;
+          g.appendChild(circle);
+        } else if (node.shape === 'rect-h') {
+          const rect = document.createElementNS(NS, 'rect');
+          rect.setAttribute('x', node.x - 32); rect.setAttribute('y', node.y - 14);
+          rect.setAttribute('width', 64); rect.setAttribute('height', 28);
+          rect.setAttribute('rx', 6); rect.setAttribute('class', 'pad-shape rect-shape');
+          rect.id = `node-${char}`; g.appendChild(rect);
+        } else if (node.shape === 'rect-v') {
+          const rect = document.createElementNS(NS, 'rect');
+          rect.setAttribute('x', node.x - 14); rect.setAttribute('y', node.y - 32);
+          rect.setAttribute('width', 28); rect.setAttribute('height', 64);
+          rect.setAttribute('rx', 6); rect.setAttribute('class', 'pad-shape rect-shape');
+          rect.id = `node-${char}`; g.appendChild(rect);
+        }
+        
+        g.appendChild(txt);
+        compGroup.appendChild(g);
+      });
+    }
+
+    /* ================== 3. ЛОГИКА ВВОДА ================== */
+    const finalTextEl = document.getElementById('final-text');
+    const currentCharEl = document.getElementById('current-char');
+    const morseKey = document.getElementById('morse-key');
+    
+    let inputPath = '';
+    let finalText = '';
+    let inputTimer = null;
+
+    let pressStartTime = 0;
+    let continuousToneOsc = null;
+    let continuousToneGain = null;
+
+    function resetLights() {
+      document.querySelectorAll('.pad-shape, .pcb-trace').forEach(el => el.classList.remove('active'));
+    }
+
+    function updateBoard() {
+      resetLights();
+      finalTextEl.textContent = finalText ? finalText + ' ' : '';
+      if (!inputPath) { currentCharEl.textContent = '—'; return; }
+      
+      let char = Object.keys(MORSE_MAP).find(key => MORSE_MAP[key] === inputPath);
+      currentCharEl.textContent = char ? char : '?';
+      
+      if (char) {
+        let currentChar = char;
+        while (currentChar !== 'root') {
+          const node = NODES[currentChar];
+          if (!node || !node.parent) break;
+          
+          const nodeEl = document.getElementById(`node-${currentChar}`);
+          if (nodeEl) nodeEl.classList.add('active');
+
+          const traceEl = document.getElementById(`trace-${node.parent}-${currentChar}`);
+          if (traceEl) traceEl.classList.add('active');
+          
+          currentChar = node.parent;
+        }
+      }
+    }
+
+    function finalizeLetter() {
+      if (!inputPath) return;
+      clearTimeout(inputTimer);
+      currentCharEl.classList.remove('finalizing');
+      let char = Object.keys(MORSE_MAP).find(key => MORSE_MAP[key] === inputPath);
+      finalText += char ? char : '?';
+      inputPath = '';
+      updateBoard();
+    }
+
+    function startContinuousTone() {
+      initAudio();
+      continuousToneOsc = audioCtx.createOscillator();
+      continuousToneGain = audioCtx.createGain();
+      continuousToneOsc.type = 'sine';
+      continuousToneOsc.frequency.value = currentTone;
+      continuousToneGain.gain.value = currentVolume;
+      continuousToneOsc.connect(continuousToneGain); continuousToneGain.connect(audioCtx.destination);
+      
+      const redLed = document.getElementById('led-red-top');
+      redLed.classList.remove('blink-green');
+      redLed.classList.add('blink-red');
+      continuousToneOsc.start();
+    }
+
+    function stopContinuousTone() {
+      if (continuousToneOsc) {
+        continuousToneOsc.stop();
+        continuousToneOsc.disconnect();
+        continuousToneGain.disconnect();
+        continuousToneOsc = null;
+        const redLed = document.getElementById('led-red-top');
+        redLed.classList.remove('blink-red', 'blink-green');
+      }
+    }
+
+    morseKey.addEventListener('mousedown', handlePressStart);
+    morseKey.addEventListener('touchstart', handlePressStart, {passive: false});
+    morseKey.addEventListener('mouseup', handlePressEnd);
+    morseKey.addEventListener('touchend', handlePressEnd);
+    morseKey.addEventListener('mouseleave', () => { if(pressStartTime > 0) handlePressEnd(); });
+
+    function handlePressStart(e) {
+      e.preventDefault();
+      clearTimeout(inputTimer);
+      currentCharEl.classList.remove('finalizing');
+      
+      morseKey.classList.add('active');
+      pressStartTime = performance.now();
+      startContinuousTone();
+    }
+
+    function handlePressEnd(e) {
+      if (e) e.preventDefault();
+      if (pressStartTime === 0) return;
+      morseKey.classList.remove('active');
+      stopContinuousTone();
+      
+      const duration = performance.now() - pressStartTime;
+      pressStartTime = 0;
+      
+      const sym = duration < 200 ? '.' : '-';
+      inputPath += sym;
+      updateBoard();
+
+      const redLed = document.getElementById('led-red-top');
+      redLed.classList.remove('blink-green', 'blink-red');
+      if (sym === '.') {
+          redLed.classList.add('blink-green');
+          setTimeout(() => redLed.classList.remove('blink-green'), 150);
+      } else {
+          redLed.classList.add('blink-red');
+          setTimeout(() => redLed.classList.remove('blink-red'), 450);
+      }
+
+      currentCharEl.classList.remove('finalizing');
+      void currentCharEl.offsetWidth;
+      currentCharEl.classList.add('finalizing');
+
+      inputTimer = setTimeout(() => {
+        finalizeLetter();
+      }, 800);
+    }
+
+    document.getElementById('btn-space').addEventListener('click', () => {
+      clearTimeout(inputTimer);
+      finalizeLetter();
+      finalText += ' ';
+      updateBoard();
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      clearTimeout(inputTimer);
+      currentCharEl.classList.remove('finalizing');
+      inputPath = '';
+      finalText = '';
+      updateBoard();
+    });
+
+    /* ================== 4. АУДИО ================== */
+    let audioCtx = null;
+    let currentVolume = 0.5;
+    let currentTone = 700;
+
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    function playTone(durationMs, type = 'dot') {
+      initAudio();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = currentTone;
+      gain.gain.value = currentVolume;
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      
+      const redLed = document.getElementById('led-red-top');
+      redLed.classList.remove('blink-green', 'blink-red');
+      
+      if (type === 'dot') {
+          redLed.classList.add('blink-green');
+      } else {
+          redLed.classList.add('blink-red');
+      }
+      
+      osc.start();
+      setTimeout(() => {
+        osc.stop();
+        gain.disconnect();
+        redLed.classList.remove('blink-green', 'blink-red');
+      }, durationMs);
+    }
+
+    async function playCode(code, unit = 100) {
+      for (const ch of code) {
+        if (ch === '.') { playTone(unit, 'dot'); await sleep(unit * 2); }
+        else if (ch === '-') { playTone(unit * 3, 'dash'); await sleep(unit * 4); }
+      }
+      await sleep(unit * 2);
+    }
+
+    async function playText(text, unit = 100) {
+      for (const ch of text.toUpperCase()) {
+        if (ch === ' ') { await sleep(unit * 7); continue; }
+        const code = MORSE_MAP[ch];
+        if (code) await playCode(code, unit);
+      }
+    }
+
+    document.getElementById('btn-sos').addEventListener('click', () => playText('SOS SOS'));
+    document.getElementById('btn-cq').addEventListener('click', () => playText('CQ CQ CQ'));
+
+    /* ================== 5. ШТОРКА ================== */
+    const drawer = document.getElementById('drawer');
+    const drawerHandle = document.getElementById('drawer-handle');
+    const closeDrawerBtn = document.getElementById('close-drawer');
+    
+    drawerHandle.addEventListener('click', () => drawer.classList.add('open'));
+    closeDrawerBtn.addEventListener('click', () => drawer.classList.remove('open'));
+
+    let touchStartY = 0;
+    let touchEndY = 0;
+    
+    document.body.addEventListener('touchstart', e => { touchStartY = e.changedTouches[0].screenY; }, {passive: true});
+    document.body.addEventListener('touchend', e => {
+      touchEndY = e.changedTouches[0].screenY;
+      const swipeDistance = touchStartY - touchEndY;
+      if (swipeDistance > 50 && touchStartY > window.innerHeight * 0.7) drawer.classList.add('open');
+      if (swipeDistance < -50 && drawer.classList.contains('open')) drawer.classList.remove('open');
+    }, {passive: true});
+
+    /* ================== 6. ФОНАРИК И МИКРОФОН ================== */
+    let torchStream = null;
+    let torchOn = false;
+
+    async function toggleTorch() {
+      initAudio();
+      if (torchOn) {
+        if (torchStream) {
+          torchStream.getTracks().forEach(t => { 
+            if (t.applyConstraints) t.applyConstraints({ advanced: [{ torch: false }] }); 
+            t.stop(); 
+          });
+          torchStream = null;
+        }
+        document.getElementById('torch-fallback').style.display = 'none';
+        torchOn = false;
+        setStatus('Фонарик выключен');
+        return;
+      }
+      try {
+        torchStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        const track = torchStream.getVideoTracks()[0];
+        const caps = track.getCapabilities ? track.getCapabilities() : {};
+        if (caps.torch) {
+          await track.applyConstraints({ advanced: [{ torch: true }] });
+          torchOn = true;
+          setStatus('Фонарик включен');
+        } else throw new Error('Нет API');
+      } catch (e) {
+        setStatus('Экран как вспышка (SOS)');
+        const fb = document.getElementById('torch-fallback');
+        fb.style.display = 'block';
+        torchOn = true;
+        const seq = '...---...';
+        for (const s of seq) {
+          fb.style.opacity = '1'; await sleep(s === '.' ? 150 : 450);
+          fb.style.opacity = '0'; await sleep(150);
+        }
+        fb.style.display = 'none';
+        torchOn = false;
+      }
+    }
+    function setStatus(msg) { document.getElementById('status').textContent = msg; }
+    document.getElementById('btn-torch').addEventListener('click', toggleTorch);
+
+    let micStream = null, micActive = false, micAnalyser = null, micData = null, lastToneState = false, toneStart = 0;
+    async function toggleMic() {
+      initAudio();
+      if (micActive) {
+        if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+        micActive = false;
+        setStatus('Микрофон выключен');
+        return;
+      }
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        micAnalyser = audioCtx.createAnalyser();
+        micAnalyser.fftSize = 1024;
+        const source = audioCtx.createMediaStreamSource(micStream);
+        source.connect(micAnalyser);
+        micData = new Uint8Array(micAnalyser.frequencyBinCount);
+        micActive = true;
+        inputPath = '';
+        setStatus('Слушаю...');
+        requestAnimationFrame(processMic);
+      } catch (e) {
+        setStatus('Ошибка микрофона');
+      }
+    }
+
+    function processMic() {
+      if (!micActive) return;
+      micAnalyser.getByteFrequencyData(micData);
+      const binHz = audioCtx.sampleRate / micAnalyser.fftSize;
+      let maxVal = 0;
+      for (let i = Math.floor(400/binHz); i < Math.floor(1200/binHz) && i < micData.length; i++) {
+        if (micData[i] > maxVal) maxVal = micData[i];
+      }
+      const tonePresent = maxVal > 80; 
+      const now = performance.now();
+
+      if (tonePresent && !lastToneState) {
+        toneStart = now;
+        document.getElementById('led-red-top').classList.add('blink-red');
+      } else if (!tonePresent && lastToneState) {
+        document.getElementById('led-red-top').classList.remove('blink-red');
+        const dur = now - toneStart;
+        if (dur > 50 && dur < 500) {
+          inputPath += (dur < 200 ? '.' : '-');
+          updateBoard();
+        }
+      }
+      lastToneState = tonePresent;
+      
+      if (!tonePresent && inputPath && now - toneStart > 800) {
+        finalizeLetter();
+      }
+      requestAnimationFrame(processMic);
+    }
+    document.getElementById('btn-mic').addEventListener('click', toggleMic);
+
+    /* ================== 7. НАСТРОЙКИ И ЗАПУСК ================== */
+    document.getElementById('tone').addEventListener('input', e => {
+      currentTone = +e.target.value;
+      document.getElementById('tone-val').textContent = currentTone + ' Гц';
+    });
+    document.getElementById('vol').addEventListener('input', e => {
+      currentVolume = +e.target.value;
+    });
+
+    drawTraces();
+    drawComponents();
+    
+    if ('serviceWorker' in navigator) {
+      if (location.protocol === 'http:' || location.protocol === 'https:') {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW reg failed:', err));
+        });
+      }
+    }
+  </script>
+</body>
+</html>
