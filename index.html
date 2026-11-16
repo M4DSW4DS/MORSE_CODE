@@ -7,12 +7,11 @@
   <meta name="theme-color" content="#0a0c10">
   <meta name="description" content="Интерактивный тренажер и передатчик азбуки Морзе">
 
-   <!-- PWA / iOS -->
+  <!-- PWA / iOS -->
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="96x96" href="./icons/favicon-96x96.png">
   <link rel="icon" type="image/x-icon" href="./icons/favicon.ico">
-  
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Morse">
@@ -28,7 +27,8 @@
       --green: #39ff88;
       --red: #ff3333;
       --text: #ffffff;
-      --control-width: clamp(70px, 15vw, 120px);
+      /* Уменьшили ширину боковых панелей, чтобы плата стала шире */
+      --control-width: clamp(60px, 12vw, 100px); 
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
     
@@ -38,24 +38,13 @@
       align-items: center; overflow: hidden;
     }
     
-    #orientation-overlay {
-      display: none;
-      position: fixed; inset: 0; background: var(--bg);
-      z-index: 9999; flex-direction: column; justify-content: center; align-items: center;
-      text-align: center; padding: 20px;
-    }
-    #orientation-overlay h2 { color: var(--gold); font-size: 1.5rem; margin-bottom: 10px; }
-    #orientation-overlay p { color: var(--text); font-size: 1rem; }
-    @media (orientation: portrait) {
-      #orientation-overlay { display: flex; }
-    }
-
     .app-container {
       display: flex; flex-direction: column; width: 100vw; height: 100dvh;
     }
     
+    /* Уменьшили отступы сверху, чтобы плата поднялась выше */
     header {
-      width: 100%; flex: 0 0 auto; padding: 5px 10px; 
+      width: 100%; flex: 0 0 auto; padding: 2px 10px; 
       display: flex; flex-direction: column; align-items: center;
       z-index: 10; background: var(--bg);
     }
@@ -65,7 +54,7 @@
       letter-spacing: 6px; font-family: monospace; 
       font-weight: bold; min-height: 1.5em; text-align: center;
       text-shadow: 0 0 10px rgba(201,162,39,0.4);
-      margin-bottom: 2px; word-break: break-all; padding: 0 10px; max-width: 100%; overflow: hidden;
+      margin-bottom: 0; word-break: break-all; padding: 0 10px; max-width: 100%; overflow: hidden;
     }
 
     #decoded { 
@@ -82,10 +71,15 @@
       display: flex; flex: 1; flex-direction: row; width: 100%; overflow: hidden;
     }
 
-    .spacer-left, .controls-right {
+    .spacer-left {
       flex: 0 0 var(--control-width); 
-      display: flex; flex-direction: column; justify-content: space-between; 
-      align-items: center; padding: 10px 0; z-index: 10;
+    }
+
+    /* Центрируем кнопки по вертикали */
+    .controls-right {
+      flex: 0 0 var(--control-width); 
+      display: flex; flex-direction: column; justify-content: center; 
+      align-items: center; gap: 20px; padding: 10px 0; z-index: 10;
     }
 
     .board-container {
@@ -95,13 +89,14 @@
     
     #board-svg { width: 100%; height: 100%; display: block; }
 
+    /* Уменьшили боковые кнопки */
     .side-btn {
-      width: clamp(50px, 10vw, 75px); 
-      height: clamp(50px, 10vw, 75px); 
+      width: clamp(40px, 8vw, 65px); 
+      height: clamp(40px, 8vw, 65px); 
       border-radius: 50%;
       background: linear-gradient(to bottom, #2a3038, #1a1e24); 
       color: var(--gold); border: 2px solid #4a5058; border-bottom: 5px solid #0a0c10;
-      font-family: 'Courier New', monospace; font-size: 0.7rem; font-weight: bold; text-align: center;
+      font-family: 'Courier New', monospace; font-size: 0.65rem; font-weight: bold; text-align: center;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: transform 0.05s, border-bottom 0.05s;
       box-shadow: 0 5px 10px rgba(0,0,0,0.5);
@@ -109,9 +104,10 @@
     }
     .side-btn:active { transform: translateY(3px); border-bottom: 2px solid #0a0c10; }
 
+    /* Уменьшили главную кнопку */
     .main-key-btn {
-      width: clamp(70px, 14vw, 100px); 
-      height: clamp(70px, 14vw, 100px); 
+      width: clamp(60px, 12vw, 90px); 
+      height: clamp(60px, 12vw, 90px); 
       border-radius: 50%;
       background: radial-gradient(circle at 35% 35%, #4a5058, #1a1e24);
       border: 3px solid #5a6068; border-bottom: 8px solid #0a0c10;
@@ -123,14 +119,22 @@
     .main-key-btn::after {
       content: ''; width: 40%; height: 40%; border-radius: 50%;
       background: #2a3038; box-shadow: inset 0 3px 6px rgba(0,0,0,0.8);
-      transition: background 0.1s;
+      transition: background 0.1s, box-shadow 0.1s;
     }
     .main-key-btn.active {
       transform: translateY(5px); border-bottom: 3px solid #0a0c10;
       background: radial-gradient(circle at 35% 35%, #5a6068, #2a3038);
     }
+    
+    /* Индикация внутри кнопки */
     .main-key-btn.active::after {
       background: var(--gold-bright); box-shadow: 0 0 25px var(--gold-bright);
+    }
+    .main-key-btn.blink-green::after {
+      background: var(--green); box-shadow: 0 0 25px var(--green);
+    }
+    .main-key-btn.blink-red::after {
+      background: var(--red); box-shadow: 0 0 25px var(--red);
     }
 
     .drawer-handle {
@@ -168,6 +172,7 @@
     input[type=range] { width: 150px; accent-color: var(--green); }
     #status { font-size: .8rem; color: #7a828c; margin-top: 15px; text-align: center;}
 
+    /* --- SVG Стили --- */
     .pcb-bg { fill: #12161a; }
     .pcb-dots { fill: #1c2228; }
     
@@ -178,9 +183,6 @@
     .pad-shape.rect-shape.active { fill: var(--red); stroke: #fff; filter: drop-shadow(0 0 10px var(--red)); }
     .pad-shape.circle-shape.active { fill: var(--green); stroke: #fff; filter: drop-shadow(0 0 10px var(--green)); }
     
-    #led-red-top.blink-green { fill: var(--green); stroke: #fff; filter: drop-shadow(0 0 15px var(--green)); }
-    #led-red-top.blink-red { fill: var(--red); stroke: #fff; filter: drop-shadow(0 0 15px var(--red)); }
-
     .antenna { stroke: #7a828c; fill: none; stroke-width: 2; transition: stroke 0.15s, filter 0.15s; }
     .antenna.active { stroke: #ffffff; filter: drop-shadow(0 0 8px #ffffff); }
 
@@ -228,11 +230,6 @@
 </head>
 <body>
 
-  <div id="orientation-overlay">
-    <h2>Поверните устройство</h2>
-    <p>Для наилучшего отображения платы, пожалуйста, держите телефон горизонтально.</p>
-  </div>
-
   <div class="app-container">
     <header>
       <div id="morse-display"></div>
@@ -246,6 +243,7 @@
       <div class="spacer-left"></div>
 
       <div class="board-container">
+        <!-- viewBox сдвинут на -20, чтобы корневая дорожка X=520 была строго по центру -->
         <svg id="board-svg" viewBox="-20 0 1080 480" preserveAspectRatio="xMidYMid meet">
           <rect x="-20" y="0" width="1120" height="480" class="pcb-bg" />
           <pattern id="pcb-dots" x="-20" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
@@ -253,9 +251,11 @@
           </pattern>
           <rect x="-20" y="0" width="1120" height="480" fill="url(#pcb-dots)"></rect>
           
-          <text x="40" y="40" class="board-title">MORSE</text>
-          <text x="940" y="40" class="board-title">CODE</text>
-          <circle id="led-red-top" cx="1040" cy="30" r="10" class="pad-shape circle-shape"></circle>
+          <!-- Сместили текст ближе к центру -->
+          <text x="180" y="40" class="board-title">MORSE</text>
+          <text x="820" y="40" class="board-title">CODE</text>
+          
+          <!-- Верхний светодиод удален, его роль теперь выполняет кнопка ввода -->
           <path id="antenna-symbol" class="antenna" d="M 520 15 L 520 35 M 505 35 L 535 35 M 510 45 L 530 45 L 520 35 Z"></path>
 
           <g id="traces-group"></g>
@@ -461,7 +461,7 @@
       });
     }
 
-    /* ================== 3. ЛОГИКА ВВОДА ================== */
+    /* ================== 3. ЛОГИКА ВВОДА И ДИСПЛЕЯ ================== */
     const finalTextEl = document.getElementById('final-text');
     const currentCharEl = document.getElementById('current-char');
     const morseDisplayEl = document.getElementById('morse-display');
@@ -540,9 +540,8 @@
       continuousToneGain.gain.value = currentVolume;
       continuousToneOsc.connect(continuousToneGain); continuousToneGain.connect(audioCtx.destination);
       
-      const redLed = document.getElementById('led-red-top');
-      redLed.classList.remove('blink-green');
-      redLed.classList.add('blink-red');
+      morseKey.classList.remove('blink-green');
+      morseKey.classList.add('blink-red');
       antennaSymbol.classList.add('active'); 
       continuousToneOsc.start();
     }
@@ -553,8 +552,7 @@
         continuousToneOsc.disconnect();
         continuousToneGain.disconnect();
         continuousToneOsc = null;
-        const redLed = document.getElementById('led-red-top');
-        redLed.classList.remove('blink-red', 'blink-green');
+        morseKey.classList.remove('blink-red', 'blink-green');
         antennaSymbol.classList.remove('active'); 
       }
     }
@@ -588,14 +586,13 @@
       inputPath += sym;
       updateBoard();
 
-      const redLed = document.getElementById('led-red-top');
-      redLed.classList.remove('blink-green', 'blink-red');
+      morseKey.classList.remove('blink-green', 'blink-red');
       if (sym === '.') {
-          redLed.classList.add('blink-green');
-          setTimeout(() => redLed.classList.remove('blink-green'), 150);
+          morseKey.classList.add('blink-green');
+          setTimeout(() => morseKey.classList.remove('blink-green'), 150);
       } else {
-          redLed.classList.add('blink-red');
-          setTimeout(() => redLed.classList.remove('blink-red'), 450);
+          morseKey.classList.add('blink-red');
+          setTimeout(() => morseKey.classList.remove('blink-red'), 450);
       }
 
       currentCharEl.classList.remove('finalizing');
@@ -644,13 +641,12 @@
       gain.gain.value = currentVolume;
       osc.connect(gain); gain.connect(audioCtx.destination);
       
-      const redLed = document.getElementById('led-red-top');
-      redLed.classList.remove('blink-green', 'blink-red');
+      morseKey.classList.remove('blink-green', 'blink-red');
       
       if (type === 'dot') {
-          redLed.classList.add('blink-green');
+          morseKey.classList.add('blink-green');
       } else {
-          redLed.classList.add('blink-red');
+          morseKey.classList.add('blink-red');
       }
       
       antennaSymbol.classList.add('active');
@@ -659,7 +655,7 @@
       setTimeout(() => {
         osc.stop();
         gain.disconnect();
-        redLed.classList.remove('blink-green', 'blink-red');
+        morseKey.classList.remove('blink-green', 'blink-red');
         antennaSymbol.classList.remove('active');
       }, durationMs);
     }
@@ -785,10 +781,10 @@
 
       if (tonePresent && !lastToneState) {
         toneStart = now;
-        document.getElementById('led-red-top').classList.add('blink-red');
+        morseKey.classList.add('blink-red');
         antennaSymbol.classList.add('active');
       } else if (!tonePresent && lastToneState) {
-        document.getElementById('led-red-top').classList.remove('blink-red');
+        morseKey.classList.remove('blink-red');
         antennaSymbol.classList.remove('active');
         const dur = now - toneStart;
         if (dur > 50 && dur < 500) {
@@ -821,14 +817,12 @@
       const closeIosHint = document.getElementById('close-ios-hint');
       let deferredPrompt = null;
 
-      // Проверяем, запущено ли уже как standalone
       const isStandalone =
         window.matchMedia('(display-mode: standalone)').matches ||
         window.navigator.standalone === true;
 
-      if (isStandalone) return; // Уже установлено — не мешаем
+      if (isStandalone) return;
 
-      // === Android / Chromium ===
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
@@ -850,12 +844,10 @@
         console.log('[PWA] Installed');
       });
 
-      // === iOS / Safari (нет beforeinstallprompt) ===
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
       const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
 
       if (isIOS) {
-        // Показываем подсказку один раз за сессию
         if (!sessionStorage.getItem('iosHintShown')) {
           setTimeout(() => {
             iosHint.classList.add('visible');
@@ -869,7 +861,6 @@
     /* ================== 9. SERVICE WORKER ================== */
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        // Проверка протокола — на GitHub Pages всегда https
         if (location.protocol === 'https:' || location.hostname === 'localhost') {
           navigator.serviceWorker.register('./sw.js')
             .then(reg => console.log('[SW] Registered:', reg.scope))
