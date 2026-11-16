@@ -15,49 +15,86 @@
       --green: #39ff88;
       --red: #ff3333;
       --text: #ffffff;
+      --control-width: clamp(70px, 15vw, 120px);
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+    
     body {
       margin: 0; height: 100dvh; background: var(--bg); color: var(--text);
-      font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center;
-      overflow: hidden; position: relative;
+      font-family: 'Courier New', monospace; display: flex; flex-direction: column; 
+      align-items: center; overflow: hidden;
     }
     
+    /* --- Заглушка для вертикального режима --- */
+    #orientation-overlay {
+      display: none;
+      position: fixed; inset: 0; background: var(--bg);
+      z-index: 9999; flex-direction: column; justify-content: center; align-items: center;
+      text-align: center; padding: 20px;
+    }
+    #orientation-overlay h2 { color: var(--gold); font-size: 1.5rem; margin-bottom: 10px; }
+    #orientation-overlay p { color: var(--text); font-size: 1rem; }
+    @media (orientation: portrait) {
+      #orientation-overlay { display: flex; }
+    }
+
+    /* --- Основной контейнер --- */
+    .app-container {
+      display: flex; flex-direction: column; width: 100vw; height: 100dvh;
+    }
+    
+    /* --- Верхний дисплей --- */
     header {
-      width: 100%; padding: 10px; display: flex; flex-direction: column; align-items: center;
+      width: 100%; flex: 0 0 auto; padding: 5px 10px; 
+      display: flex; flex-direction: column; align-items: center;
       z-index: 10; background: var(--bg);
     }
-    h1 { font-size: 1.4rem; letter-spacing: 6px; color: var(--gold); margin: 0 0 5px; text-shadow: 0 0 15px rgba(201,162,39,0.6); text-align: center;}
     
+    #morse-display {
+      font-size: 1.2rem; color: var(--gold); 
+      letter-spacing: 6px; font-family: monospace; 
+      font-weight: bold; min-height: 1.5em; text-align: center;
+      text-shadow: 0 0 10px rgba(201,162,39,0.4);
+      margin-bottom: 2px; word-break: break-all; padding: 0 10px; max-width: 100%; overflow: hidden;
+    }
+
     #decoded { 
-      font-size: 1.6rem; color: var(--green); 
+      font-size: 1.4rem; color: var(--green); 
       min-height: 1.5em; text-align: center; letter-spacing: 2px; 
       font-weight: bold; text-shadow: 0 0 15px rgba(57,255,136,0.4);
       font-family: monospace; display: flex; justify-content: center; gap: 10px;
       width: 100%; overflow: hidden; white-space: nowrap;
     }
-    #final-text { color: #fff; text-shadow: none; overflow: hidden; text-overflow: ellipsis; max-width: 70%;}
+    #final-text { color: #fff; text-shadow: none; overflow: hidden; text-overflow: ellipsis; max-width: 80%;}
     #current-char { color: var(--gold); text-shadow: 0 0 10px rgba(201,162,39,0.5); min-width: 35px;}
 
+    /* --- Рабочая область (Плата + Кнопки) --- */
+    .main-content {
+      display: flex; flex: 1; flex-direction: row; width: 100%; overflow: hidden;
+    }
+
+    /* Симметричные пустые места слева и справа */
+    .spacer-left, .controls-right {
+      flex: 0 0 var(--control-width); 
+      display: flex; flex-direction: column; justify-content: space-between; 
+      align-items: center; padding: 10px 0; z-index: 10;
+    }
+
     .board-container {
-      width: 100%; flex: 1; display: flex; justify-content: center; align-items: center;
-      padding: 0 10px; overflow: hidden;
+      flex: 1; display: flex; justify-content: center; align-items: center;
+      position: relative; overflow: hidden;
     }
     
     #board-svg { width: 100%; height: 100%; display: block; }
 
-    .bottom-bar {
-      width: 100%; max-width: 500px; padding: 15px 20px 30px; 
-      display: flex; justify-content: space-between; align-items: center;
-      background: var(--bg); z-index: 10;
-    }
-
-    /* Стиль для боковых кнопок (Пробел и Сброс) - теперь они идентичны */
+    /* --- Вертикальные кнопки справа --- */
     .side-btn {
-      width: 65px; height: 65px; border-radius: 50%;
+      width: clamp(50px, 10vw, 75px); 
+      height: clamp(50px, 10vw, 75px); 
+      border-radius: 50%;
       background: linear-gradient(to bottom, #2a3038, #1a1e24); 
       color: var(--gold); border: 2px solid #4a5058; border-bottom: 5px solid #0a0c10;
-      font-family: sans-serif; font-size: 0.7rem; font-weight: bold; text-align: center; line-height: 1.2;
+      font-family: 'Courier New', monospace; font-size: 0.7rem; font-weight: bold; text-align: center;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: transform 0.05s, border-bottom 0.05s;
       box-shadow: 0 5px 10px rgba(0,0,0,0.5);
@@ -66,7 +103,9 @@
     .side-btn:active { transform: translateY(3px); border-bottom: 2px solid #0a0c10; }
 
     .main-key-btn {
-      width: 95px; height: 95px; border-radius: 50%;
+      width: clamp(70px, 14vw, 100px); 
+      height: clamp(70px, 14vw, 100px); 
+      border-radius: 50%;
       background: radial-gradient(circle at 35% 35%, #4a5058, #1a1e24);
       border: 3px solid #5a6068; border-bottom: 8px solid #0a0c10;
       box-shadow: 0 10px 25px rgba(0,0,0,0.8), inset 0 2px 5px rgba(255,255,255,0.1);
@@ -75,7 +114,7 @@
       position: relative;
     }
     .main-key-btn::after {
-      content: ''; width: 40px; height: 40px; border-radius: 50%;
+      content: ''; width: 40%; height: 40%; border-radius: 50%;
       background: #2a3038; box-shadow: inset 0 3px 6px rgba(0,0,0,0.8);
       transition: background 0.1s;
     }
@@ -87,6 +126,7 @@
       background: var(--gold-bright); box-shadow: 0 0 25px var(--gold-bright);
     }
 
+    /* --- Шторка (меню) --- */
     .drawer-handle {
       position: absolute; bottom: 0; left: 0; width: 100%; height: 20px;
       display: flex; justify-content: center; align-items: flex-end; padding-bottom: 3px;
@@ -126,57 +166,79 @@
     .pcb-bg { fill: #12161a; }
     .pcb-dots { fill: #1c2228; }
     
-    .pcb-trace { fill: none; stroke: var(--gold-dim); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.15s, stroke-width 0.15s; }
-    .pcb-trace.active { stroke: var(--gold-bright); stroke-width: 6; filter: drop-shadow(0 0 8px var(--gold-bright)); }
+    .pcb-trace { fill: none; stroke: var(--gold-dim); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.15s, stroke-width 0.15s; }
+    .pcb-trace.active { stroke: var(--gold-bright); stroke-width: 5; filter: drop-shadow(0 0 6px var(--gold-bright)); }
     
-    .pad-shape { fill: #12161a; stroke: var(--gold); stroke-width: 4; transition: all 0.15s; }
-    .pad-shape.rect-shape.active { fill: var(--red); stroke: #fff; filter: drop-shadow(0 0 12px var(--red)); }
-    .pad-shape.circle-shape.active { fill: var(--green); stroke: #fff; filter: drop-shadow(0 0 12px var(--green)); }
+    .pad-shape { fill: #12161a; stroke: var(--gold); stroke-width: 3; transition: all 0.15s; }
+    .pad-shape.rect-shape.active { fill: var(--red); stroke: #fff; filter: drop-shadow(0 0 10px var(--red)); }
+    .pad-shape.circle-shape.active { fill: var(--green); stroke: #fff; filter: drop-shadow(0 0 10px var(--green)); }
     
     #led-red-top.blink-green { fill: var(--green); stroke: #fff; filter: drop-shadow(0 0 15px var(--green)); }
     #led-red-top.blink-red { fill: var(--red); stroke: #fff; filter: drop-shadow(0 0 15px var(--red)); }
 
-    .pad-text { fill: var(--text); font-family: 'Arial Black', Impact, sans-serif; font-size: 24px; font-weight: 900; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-    .board-title { fill: #7a828c; font-family: sans-serif; font-size: 24px; font-weight: bold; letter-spacing: 4px; opacity: 0.8;}
-    .antenna { stroke: #7a828c; fill: none; stroke-width: 3; }
+    .antenna { stroke: #7a828c; fill: none; stroke-width: 2; transition: stroke 0.15s, filter 0.15s; }
+    .antenna.active { stroke: #ffffff; filter: drop-shadow(0 0 8px #ffffff); }
+
+    .pad-text { 
+      fill: var(--text); font-family: 'Arial', sans-serif; 
+      font-size: 20px; font-weight: 900; 
+      text-anchor: middle; dominant-baseline: middle; pointer-events: none; 
+      stroke: var(--bg); stroke-width: 5px; paint-order: stroke fill;
+    }
+    .board-title { fill: #7a828c; font-family: sans-serif; font-size: 18px; font-weight: bold; letter-spacing: 4px; opacity: 0.8;}
     
-    #torch-fallback { position: fixed; inset: 0; background: #fff; z-index: 999; display: none; pointer-events: none; }
+    #torch-fallback { position: fixed; inset: 0; background: #fff; z-index: 9999; display: none; pointer-events: none; }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>MORSE CODE</h1>
-    <div id="decoded">
-      <span id="final-text"></span>
-      <span id="current-char">—</span>
-    </div>
-  </header>
-
-  <div class="board-container">
-    <!-- ViewBox увеличен по ширине для идеального размещения без наложений -->
-    <svg id="board-svg" viewBox="0 0 1000 850" preserveAspectRatio="xMidYMid meet">
-      <rect width="1000" height="850" class="pcb-bg" />
-      <pattern id="pcb-dots" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
-        <circle cx="2" cy="2" r="2" class="pcb-dots"></circle>
-      </pattern>
-      <rect width="1000" height="850" fill="url(#pcb-dots)"></rect>
-      
-      <text x="60" y="60" class="board-title">MORSE</text>
-      <text x="820" y="60" class="board-title">CODE</text>
-      <circle id="led-red-top" cx="940" cy="50" r="14" class="pad-shape circle-shape"></circle>
-      <path class="antenna" d="M 500 30 L 500 60 M 480 60 L 520 60 M 485 75 L 515 75 L 500 60 Z"></path>
-
-      <g id="traces-group"></g>
-      <g id="components-group"></g>
-    </svg>
+  <!-- Заглушка при вертикальном положении -->
+  <div id="orientation-overlay">
+    <h2>Поверните устройство</h2>
+    <p>Для наилучшего отображения платы, пожалуйста, держите телефон горизонтально.</p>
   </div>
 
-  <div class="bottom-bar">
-    <!-- Убран зеленый стиль, теперь кнопка как СБРОС -->
-    <button id="btn-space" class="side-btn">ПРО-<br>БЕЛ</button>
-    <button id="morse-key" class="main-key-btn" aria-label="Morse Key"></button>
-    <button id="btn-reset" class="side-btn">СБРОС</button>
+  <div class="app-container">
+    <header>
+      <div id="morse-display"></div>
+      <div id="decoded">
+        <span id="final-text"></span>
+        <span id="current-char"></span>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <!-- Пустое место слева для симметрии -->
+      <div class="spacer-left"></div>
+
+      <!-- Плата -->
+      <div class="board-container">
+        <!-- viewBox сдвинут на -20, чтобы корневая дорожка X=520 была строго по центру -->
+        <svg id="board-svg" viewBox="-20 0 1080 480" preserveAspectRatio="xMidYMid meet">
+          <rect x="-20" y="0" width="1120" height="480" class="pcb-bg" />
+          <pattern id="pcb-dots" x="-20" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1.5" class="pcb-dots"></circle>
+          </pattern>
+          <rect x="-20" y="0" width="1120" height="480" fill="url(#pcb-dots)"></rect>
+          
+          <text x="40" y="40" class="board-title">MORSE</text>
+          <text x="940" y="40" class="board-title">CODE</text>
+          <circle id="led-red-top" cx="1040" cy="30" r="10" class="pad-shape circle-shape"></circle>
+          <!-- Антенна строго по центру X=520 -->
+          <path id="antenna-symbol" class="antenna" d="M 520 15 L 520 35 M 505 35 L 535 35 M 510 45 L 530 45 L 520 35 Z"></path>
+
+          <g id="traces-group"></g>
+          <g id="components-group"></g>
+        </svg>
+      </div>
+
+      <!-- Вертикальные кнопки справа -->
+      <div class="controls-right">
+        <button id="btn-space" class="side-btn">SPACE</button>
+        <button id="morse-key" class="main-key-btn" aria-label="Morse Key"></button>
+        <button id="btn-reset" class="side-btn">RESET</button>
+      </div>
+    </div>
   </div>
 
   <div class="drawer-handle" id="drawer-handle"><div class="drawer-handle-bar"></div></div>
@@ -211,45 +273,44 @@
   <div id="torch-fallback"></div>
 
   <script>
-    /* ================== 1. ИДЕАЛЬНАЯ СЕТКА БЕЗ НАЛОЖЕНИЙ ================== */
-    // Листья: Q, Z, Y, C, X, B, P, J, L, F, H, V.
-    // Расстояние между соседними листьями = 70px (ширина элемента = 64px).
+    /* ================== 1. ИДЕАЛЬНАЯ СЕТКА ================== */
+    // Координаты X оставлены прежними, viewBox сдвинут для центрирования
     const NODES = {
-      'root': { x: 500, y: 120, shape: 'none', code: '', parent: null },
+      'root': { x: 520, y: 60, shape: 'none', code: '', parent: null },
       
       // Уровень 1
-      'T': { x: 250, y: 260, shape: 'rect-h', code: '-', parent: 'root' },
-      'E': { x: 750, y: 260, shape: 'led', code: '.', parent: 'root' },
+      'T': { x: 240, y: 140, shape: 'rect-h', code: '-', parent: 'root' },
+      'E': { x: 800, y: 140, shape: 'led', code: '.', parent: 'root' },
       
       // Уровень 2
-      'M': { x: 150, y: 400, shape: 'rect-h', code: '--', parent: 'T' },
-      'N': { x: 350, y: 400, shape: 'circle', code: '-.', parent: 'T' },
-      'A': { x: 650, y: 400, shape: 'rect-v', code: '.-', parent: 'E' },
-      'I': { x: 850, y: 400, shape: 'led', code: '..', parent: 'E' },
+      'M': { x: 100, y: 220, shape: 'rect-h', code: '--', parent: 'T' },
+      'N': { x: 380, y: 220, shape: 'circle', code: '-.', parent: 'T' },
+      'A': { x: 660, y: 220, shape: 'rect-h', code: '.-', parent: 'E' },
+      'I': { x: 940, y: 220, shape: 'led', code: '..', parent: 'E' },
       
       // Уровень 3
-      'O': { x: 100, y: 540, shape: 'rect-h', code: '---', parent: 'M' },
-      'G': { x: 200, y: 540, shape: 'circle', code: '--.', parent: 'M' },
-      'K': { x: 300, y: 540, shape: 'rect-h', code: '-.-', parent: 'N' },
-      'D': { x: 400, y: 540, shape: 'circle', code: '-..', parent: 'N' },
-      'W': { x: 600, y: 540, shape: 'rect-v', code: '.--', parent: 'A' },
-      'R': { x: 700, y: 540, shape: 'circle', code: '.-.', parent: 'A' },
-      'U': { x: 800, y: 540, shape: 'rect-v', code: '..-', parent: 'I' },
-      'S': { x: 900, y: 540, shape: 'led', code: '...', parent: 'I' },
+      'O': { x: 60, y: 300, shape: 'rect-h', code: '---', parent: 'M' },
+      'G': { x: 140, y: 300, shape: 'circle', code: '--.', parent: 'M' },
+      'K': { x: 300, y: 300, shape: 'rect-h', code: '-.-', parent: 'N' },
+      'D': { x: 460, y: 300, shape: 'circle', code: '-..', parent: 'N' },
+      'R': { x: 600, y: 300, shape: 'circle', code: '.-.', parent: 'A' },
+      'W': { x: 720, y: 300, shape: 'rect-h', code: '.--', parent: 'A' },
+      'S': { x: 880, y: 300, shape: 'led', code: '...', parent: 'I' },
+      'U': { x: 1000, y: 300, shape: 'rect-h', code: '..-', parent: 'I' },
       
-      // Уровень 4 (Листья, шаг 70px)
-      'Q': { x: 165, y: 680, shape: 'rect-h', code: '--.-', parent: 'G' },
-      'Z': { x: 235, y: 680, shape: 'circle', code: '--..', parent: 'G' },
-      'Y': { x: 305, y: 680, shape: 'rect-h', code: '-.--', parent: 'K' },
-      'C': { x: 375, y: 680, shape: 'circle', code: '-.-.', parent: 'K' },
-      'X': { x: 445, y: 680, shape: 'rect-h', code: '-..-', parent: 'D' },
-      'B': { x: 515, y: 680, shape: 'circle', code: '-...', parent: 'D' },
-      'P': { x: 585, y: 680, shape: 'circle', code: '.--.', parent: 'W' },
-      'J': { x: 655, y: 680, shape: 'rect-v', code: '.---', parent: 'W' },
-      'L': { x: 725, y: 680, shape: 'circle', code: '.-..', parent: 'R' },
-      'F': { x: 795, y: 680, shape: 'circle', code: '..-.', parent: 'U' },
-      'H': { x: 865, y: 680, shape: 'led', code: '....', parent: 'S' },
-      'V': { x: 935, y: 680, shape: 'rect-v', code: '...-', parent: 'S' }
+      // Уровень 4 (Листья)
+      'Q': { x: 100, y: 380, shape: 'rect-h', code: '--.-', parent: 'G' },
+      'Z': { x: 180, y: 380, shape: 'circle', code: '--..', parent: 'G' },
+      'Y': { x: 260, y: 380, shape: 'rect-h', code: '-.--', parent: 'K' },
+      'C': { x: 340, y: 380, shape: 'circle', code: '-.-.', parent: 'K' },
+      'X': { x: 420, y: 380, shape: 'rect-h', code: '-..-', parent: 'D' },
+      'B': { x: 500, y: 380, shape: 'circle', code: '-...', parent: 'D' },
+      'L': { x: 600, y: 380, shape: 'circle', code: '.-..', parent: 'R' },
+      'J': { x: 680, y: 380, shape: 'rect-h', code: '.---', parent: 'W' },
+      'P': { x: 760, y: 380, shape: 'circle', code: '.--.', parent: 'W' },
+      'H': { x: 840, y: 380, shape: 'led', code: '....', parent: 'S' },
+      'V': { x: 920, y: 380, shape: 'rect-h', code: '...-', parent: 'S' },
+      'F': { x: 1000, y: 380, shape: 'circle', code: '..-.', parent: 'U' }
     };
 
     const MORSE_MAP = {};
@@ -271,17 +332,13 @@
         if (!parent) return;
 
         let d = '';
-        if (parent.x === node.x) {
+        if (parent.y === node.y) {
           d = `M ${parent.x} ${parent.y} L ${node.x} ${node.y}`;
-        } else if (parent.y === node.y) {
+        } else if (parent.x === node.x) {
           d = `M ${parent.x} ${parent.y} L ${node.x} ${node.y}`;
         } else {
-          // ИСПРАВЛЕНО: Сдвиг стволов влево/вправо, чтобы они не сливались в пучок
-          const isLeft = node.x < parent.x;
-          const offset = isLeft ? -5 : 5; 
-          const trunkX = parent.x + offset;
-          
-          d = `M ${parent.x} ${parent.y} L ${trunkX} ${parent.y} L ${trunkX} ${node.y} L ${node.x} ${node.y}`;
+          const midY = parent.y + (node.y - parent.y) * 0.5;
+          d = `M ${parent.x} ${parent.y} L ${parent.x} ${midY} L ${node.x} ${midY} L ${node.x} ${node.y}`;
         }
 
         const path = document.createElementNS(NS, 'path');
@@ -301,7 +358,6 @@
         const g = document.createElementNS(NS, 'g');
         g.style.cursor = 'pointer';
         
-        // Последовательное зажигание при клике
         g.addEventListener('click', async () => {
           clearTimeout(inputTimer);
           currentCharEl.classList.remove('finalizing');
@@ -341,11 +397,14 @@
 
         const txt = document.createElementNS(NS, 'text');
         let textX = node.x;
-        let textY = node.y - 28; 
+        let textY = node.y - 18; 
         
-        if (node.shape === 'rect-v') { textX = node.x + 28; textY = node.y; } 
-        else if (node.shape === 'circle' || node.shape === 'led') { textX = node.x; textY = node.y - 28; } 
-        else if (node.shape === 'rect-h') { textX = node.x; textY = node.y - 24; }
+        // Текст ПОД кнопками для нижнего ряда
+        if (node.y === 380) {
+            textY = node.y + 24; 
+        } else if (node.shape === 'circle' || node.shape === 'led') { 
+            textY = node.y - 20; 
+        }
 
         txt.setAttribute('x', textX);
         txt.setAttribute('y', textY);
@@ -356,21 +415,15 @@
         if (node.shape === 'led' || node.shape === 'circle') {
           const circle = document.createElementNS(NS, 'circle');
           circle.setAttribute('cx', node.x); circle.setAttribute('cy', node.y);
-          circle.setAttribute('r', 18);
+          circle.setAttribute('r', 12);
           circle.setAttribute('class', 'pad-shape circle-shape');
           circle.id = `node-${char}`;
           g.appendChild(circle);
         } else if (node.shape === 'rect-h') {
           const rect = document.createElementNS(NS, 'rect');
-          rect.setAttribute('x', node.x - 32); rect.setAttribute('y', node.y - 14);
-          rect.setAttribute('width', 64); rect.setAttribute('height', 28);
-          rect.setAttribute('rx', 6); rect.setAttribute('class', 'pad-shape rect-shape');
-          rect.id = `node-${char}`; g.appendChild(rect);
-        } else if (node.shape === 'rect-v') {
-          const rect = document.createElementNS(NS, 'rect');
-          rect.setAttribute('x', node.x - 14); rect.setAttribute('y', node.y - 32);
-          rect.setAttribute('width', 28); rect.setAttribute('height', 64);
-          rect.setAttribute('rx', 6); rect.setAttribute('class', 'pad-shape rect-shape');
+          rect.setAttribute('x', node.x - 18); rect.setAttribute('y', node.y - 6);
+          rect.setAttribute('width', 36); rect.setAttribute('height', 12);
+          rect.setAttribute('rx', 3); rect.setAttribute('class', 'pad-shape rect-shape');
           rect.id = `node-${char}`; g.appendChild(rect);
         }
         
@@ -379,13 +432,16 @@
       });
     }
 
-    /* ================== 3. ЛОГИКА ВВОДА ================== */
+    /* ================== 3. ЛОГИКА ВВОДА И ДИСПЛЕЯ ================== */
     const finalTextEl = document.getElementById('final-text');
     const currentCharEl = document.getElementById('current-char');
+    const morseDisplayEl = document.getElementById('morse-display');
     const morseKey = document.getElementById('morse-key');
+    const antennaSymbol = document.getElementById('antenna-symbol');
     
     let inputPath = '';
     let finalText = '';
+    let finalMorseText = ''; 
     let inputTimer = null;
 
     let pressStartTime = 0;
@@ -399,7 +455,15 @@
     function updateBoard() {
       resetLights();
       finalTextEl.textContent = finalText ? finalText + ' ' : '';
-      if (!inputPath) { currentCharEl.textContent = '—'; return; }
+      
+      if (!inputPath) { 
+        currentCharEl.textContent = ''; 
+        morseDisplayEl.textContent = finalMorseText.trim(); 
+        return; 
+      }
+      
+      let currentMorsePart = inputPath.split('').join(' ');
+      morseDisplayEl.textContent = (finalMorseText + ' ' + currentMorsePart).trim();
       
       let char = Object.keys(MORSE_MAP).find(key => MORSE_MAP[key] === inputPath);
       currentCharEl.textContent = char ? char : '?';
@@ -426,7 +490,14 @@
       clearTimeout(inputTimer);
       currentCharEl.classList.remove('finalizing');
       let char = Object.keys(MORSE_MAP).find(key => MORSE_MAP[key] === inputPath);
-      finalText += char ? char : '?';
+      
+      if (char) {
+        finalText += char;
+        finalMorseText += inputPath + ' '; 
+      } else {
+        finalText += '?';
+        finalMorseText += inputPath + ' ';
+      }
       inputPath = '';
       updateBoard();
     }
@@ -443,6 +514,7 @@
       const redLed = document.getElementById('led-red-top');
       redLed.classList.remove('blink-green');
       redLed.classList.add('blink-red');
+      antennaSymbol.classList.add('active'); 
       continuousToneOsc.start();
     }
 
@@ -454,6 +526,7 @@
         continuousToneOsc = null;
         const redLed = document.getElementById('led-red-top');
         redLed.classList.remove('blink-red', 'blink-green');
+        antennaSymbol.classList.remove('active'); 
       }
     }
 
@@ -509,6 +582,7 @@
       clearTimeout(inputTimer);
       finalizeLetter();
       finalText += ' ';
+      finalMorseText += '/ '; 
       updateBoard();
     });
 
@@ -517,6 +591,7 @@
       currentCharEl.classList.remove('finalizing');
       inputPath = '';
       finalText = '';
+      finalMorseText = '';
       updateBoard();
     });
 
@@ -549,11 +624,14 @@
           redLed.classList.add('blink-red');
       }
       
+      antennaSymbol.classList.add('active');
+      
       osc.start();
       setTimeout(() => {
         osc.stop();
         gain.disconnect();
         redLed.classList.remove('blink-green', 'blink-red');
+        antennaSymbol.classList.remove('active');
       }, durationMs);
     }
 
@@ -679,8 +757,10 @@
       if (tonePresent && !lastToneState) {
         toneStart = now;
         document.getElementById('led-red-top').classList.add('blink-red');
+        antennaSymbol.classList.add('active');
       } else if (!tonePresent && lastToneState) {
         document.getElementById('led-red-top').classList.remove('blink-red');
+        antennaSymbol.classList.remove('active');
         const dur = now - toneStart;
         if (dur > 50 && dur < 500) {
           inputPath += (dur < 200 ? '.' : '-');
@@ -707,6 +787,7 @@
 
     drawTraces();
     drawComponents();
+    updateBoard(); 
     
     if ('serviceWorker' in navigator) {
       if (location.protocol === 'http:' || location.protocol === 'https:') {
