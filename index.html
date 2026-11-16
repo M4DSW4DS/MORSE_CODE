@@ -5,6 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MORSE CODE Gadget</title>
   <meta name="theme-color" content="#0a0c10">
+  <meta name="description" content="Интерактивный тренажер и передатчик азбуки Морзе">
+
+   <!-- PWA / iOS -->
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="./icons/favicon-96x96.png">
+  <link rel="icon" type="image/x-icon" href="./icons/favicon.ico">
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Morse">
+  <meta name="mobile-web-app-capable" content="yes">
+
   <style>
     :root {
       --bg: #0a0c10;
@@ -25,7 +38,6 @@
       align-items: center; overflow: hidden;
     }
     
-    /* --- Заглушка для вертикального режима --- */
     #orientation-overlay {
       display: none;
       position: fixed; inset: 0; background: var(--bg);
@@ -38,12 +50,10 @@
       #orientation-overlay { display: flex; }
     }
 
-    /* --- Основной контейнер --- */
     .app-container {
       display: flex; flex-direction: column; width: 100vw; height: 100dvh;
     }
     
-    /* --- Верхний дисплей --- */
     header {
       width: 100%; flex: 0 0 auto; padding: 5px 10px; 
       display: flex; flex-direction: column; align-items: center;
@@ -68,12 +78,10 @@
     #final-text { color: #fff; text-shadow: none; overflow: hidden; text-overflow: ellipsis; max-width: 80%;}
     #current-char { color: var(--gold); text-shadow: 0 0 10px rgba(201,162,39,0.5); min-width: 35px;}
 
-    /* --- Рабочая область (Плата + Кнопки) --- */
     .main-content {
       display: flex; flex: 1; flex-direction: row; width: 100%; overflow: hidden;
     }
 
-    /* Симметричные пустые места слева и справа */
     .spacer-left, .controls-right {
       flex: 0 0 var(--control-width); 
       display: flex; flex-direction: column; justify-content: space-between; 
@@ -87,7 +95,6 @@
     
     #board-svg { width: 100%; height: 100%; display: block; }
 
-    /* --- Вертикальные кнопки справа --- */
     .side-btn {
       width: clamp(50px, 10vw, 75px); 
       height: clamp(50px, 10vw, 75px); 
@@ -126,7 +133,6 @@
       background: var(--gold-bright); box-shadow: 0 0 25px var(--gold-bright);
     }
 
-    /* --- Шторка (меню) --- */
     .drawer-handle {
       position: absolute; bottom: 0; left: 0; width: 100%; height: 20px;
       display: flex; justify-content: center; align-items: flex-end; padding-bottom: 3px;
@@ -162,7 +168,6 @@
     input[type=range] { width: 150px; accent-color: var(--green); }
     #status { font-size: .8rem; color: #7a828c; margin-top: 15px; text-align: center;}
 
-    /* --- SVG Стили --- */
     .pcb-bg { fill: #12161a; }
     .pcb-dots { fill: #1c2228; }
     
@@ -188,11 +193,41 @@
     .board-title { fill: #7a828c; font-family: sans-serif; font-size: 18px; font-weight: bold; letter-spacing: 4px; opacity: 0.8;}
     
     #torch-fallback { position: fixed; inset: 0; background: #fff; z-index: 9999; display: none; pointer-events: none; }
+
+    /* === PWA install UI === */
+    #install-btn {
+      position: fixed; top: 10px; right: 10px; z-index: 900;
+      display: none; align-items: center; gap: 6px;
+      padding: 8px 14px;
+      background: linear-gradient(to bottom, var(--gold-bright), var(--gold));
+      color: #0a0c10; border: none; border-radius: 20px;
+      font-family: 'Courier New', monospace; font-weight: bold; font-size: .8rem;
+      box-shadow: 0 4px 12px rgba(201,162,39,0.5);
+      cursor: pointer; transition: transform .1s, box-shadow .2s;
+    }
+    #install-btn:hover { box-shadow: 0 6px 18px rgba(201,162,39,0.7); }
+    #install-btn:active { transform: scale(0.95); }
+    #install-btn.visible { display: inline-flex; }
+
+    #ios-hint {
+      position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+      z-index: 900;
+      background: rgba(20,24,29,0.95); color: var(--text);
+      border: 1px solid var(--gold); border-radius: 12px;
+      padding: 12px 16px; font-size: .8rem; max-width: 320px; text-align: center;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+      display: none;
+    }
+    #ios-hint.visible { display: block; }
+    #ios-hint b { color: var(--gold-bright); }
+    #ios-hint .close-hint {
+      position: absolute; top: 4px; right: 8px; cursor: pointer;
+      color: #7a828c; font-weight: bold; font-size: 1rem;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Заглушка при вертикальном положении -->
   <div id="orientation-overlay">
     <h2>Поверните устройство</h2>
     <p>Для наилучшего отображения платы, пожалуйста, держите телефон горизонтально.</p>
@@ -208,12 +243,9 @@
     </header>
 
     <div class="main-content">
-      <!-- Пустое место слева для симметрии -->
       <div class="spacer-left"></div>
 
-      <!-- Плата -->
       <div class="board-container">
-        <!-- viewBox сдвинут на -20, чтобы корневая дорожка X=520 была строго по центру -->
         <svg id="board-svg" viewBox="-20 0 1080 480" preserveAspectRatio="xMidYMid meet">
           <rect x="-20" y="0" width="1120" height="480" class="pcb-bg" />
           <pattern id="pcb-dots" x="-20" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
@@ -224,7 +256,6 @@
           <text x="40" y="40" class="board-title">MORSE</text>
           <text x="940" y="40" class="board-title">CODE</text>
           <circle id="led-red-top" cx="1040" cy="30" r="10" class="pad-shape circle-shape"></circle>
-          <!-- Антенна строго по центру X=520 -->
           <path id="antenna-symbol" class="antenna" d="M 520 15 L 520 35 M 505 35 L 535 35 M 510 45 L 530 45 L 520 35 Z"></path>
 
           <g id="traces-group"></g>
@@ -232,7 +263,6 @@
         </svg>
       </div>
 
-      <!-- Вертикальные кнопки справа -->
       <div class="controls-right">
         <button id="btn-space" class="side-btn">SPACE</button>
         <button id="morse-key" class="main-key-btn" aria-label="Morse Key"></button>
@@ -272,23 +302,25 @@
 
   <div id="torch-fallback"></div>
 
+  <!-- PWA UI -->
+  <button id="install-btn" title="Установить на главный экран">
+    ⬇ Установить
+  </button>
+  <div id="ios-hint">
+    <span class="close-hint" id="close-ios-hint">✕</span>
+    Установите приложение: нажмите <b>«Поделиться»</b> <br>и выберите <b>«На экран „Домой“»</b>
+  </div>
+
   <script>
     /* ================== 1. ИДЕАЛЬНАЯ СЕТКА ================== */
-    // Координаты X оставлены прежними, viewBox сдвинут для центрирования
     const NODES = {
       'root': { x: 520, y: 60, shape: 'none', code: '', parent: null },
-      
-      // Уровень 1
       'T': { x: 240, y: 140, shape: 'rect-h', code: '-', parent: 'root' },
       'E': { x: 800, y: 140, shape: 'led', code: '.', parent: 'root' },
-      
-      // Уровень 2
       'M': { x: 100, y: 220, shape: 'rect-h', code: '--', parent: 'T' },
       'N': { x: 380, y: 220, shape: 'circle', code: '-.', parent: 'T' },
       'A': { x: 660, y: 220, shape: 'rect-h', code: '.-', parent: 'E' },
       'I': { x: 940, y: 220, shape: 'led', code: '..', parent: 'E' },
-      
-      // Уровень 3
       'O': { x: 60, y: 300, shape: 'rect-h', code: '---', parent: 'M' },
       'G': { x: 140, y: 300, shape: 'circle', code: '--.', parent: 'M' },
       'K': { x: 300, y: 300, shape: 'rect-h', code: '-.-', parent: 'N' },
@@ -297,8 +329,6 @@
       'W': { x: 720, y: 300, shape: 'rect-h', code: '.--', parent: 'A' },
       'S': { x: 880, y: 300, shape: 'led', code: '...', parent: 'I' },
       'U': { x: 1000, y: 300, shape: 'rect-h', code: '..-', parent: 'I' },
-      
-      // Уровень 4 (Листья)
       'Q': { x: 100, y: 380, shape: 'rect-h', code: '--.-', parent: 'G' },
       'Z': { x: 180, y: 380, shape: 'circle', code: '--..', parent: 'G' },
       'Y': { x: 260, y: 380, shape: 'rect-h', code: '-.--', parent: 'K' },
@@ -399,7 +429,6 @@
         let textX = node.x;
         let textY = node.y - 18; 
         
-        // Текст ПОД кнопками для нижнего ряда
         if (node.y === 380) {
             textY = node.y + 24; 
         } else if (node.shape === 'circle' || node.shape === 'led') { 
@@ -432,7 +461,7 @@
       });
     }
 
-    /* ================== 3. ЛОГИКА ВВОДА И ДИСПЛЕЯ ================== */
+    /* ================== 3. ЛОГИКА ВВОДА ================== */
     const finalTextEl = document.getElementById('final-text');
     const currentCharEl = document.getElementById('current-char');
     const morseDisplayEl = document.getElementById('morse-display');
@@ -776,7 +805,7 @@
     }
     document.getElementById('btn-mic').addEventListener('click', toggleMic);
 
-    /* ================== 7. НАСТРОЙКИ И ЗАПУСК ================== */
+    /* ================== 7. НАСТРОЙКИ ================== */
     document.getElementById('tone').addEventListener('input', e => {
       currentTone = +e.target.value;
       document.getElementById('tone-val').textContent = currentTone + ' Гц';
@@ -785,17 +814,74 @@
       currentVolume = +e.target.value;
     });
 
+    /* ================== 8. PWA INSTALL ================== */
+    (function() {
+      const installBtn = document.getElementById('install-btn');
+      const iosHint = document.getElementById('ios-hint');
+      const closeIosHint = document.getElementById('close-ios-hint');
+      let deferredPrompt = null;
+
+      // Проверяем, запущено ли уже как standalone
+      const isStandalone =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true;
+
+      if (isStandalone) return; // Уже установлено — не мешаем
+
+      // === Android / Chromium ===
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.classList.add('visible');
+      });
+
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        installBtn.classList.remove('visible');
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('[PWA] User choice:', outcome);
+        deferredPrompt = null;
+      });
+
+      window.addEventListener('appinstalled', () => {
+        installBtn.classList.remove('visible');
+        deferredPrompt = null;
+        console.log('[PWA] Installed');
+      });
+
+      // === iOS / Safari (нет beforeinstallprompt) ===
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+
+      if (isIOS) {
+        // Показываем подсказку один раз за сессию
+        if (!sessionStorage.getItem('iosHintShown')) {
+          setTimeout(() => {
+            iosHint.classList.add('visible');
+            sessionStorage.setItem('iosHintShown', '1');
+          }, 2500);
+        }
+        closeIosHint.addEventListener('click', () => iosHint.classList.remove('visible'));
+      }
+    })();
+
+    /* ================== 9. SERVICE WORKER ================== */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        // Проверка протокола — на GitHub Pages всегда https
+        if (location.protocol === 'https:' || location.hostname === 'localhost') {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('[SW] Registered:', reg.scope))
+            .catch(err => console.warn('[SW] Registration failed:', err));
+        }
+      });
+    }
+
+    /* ================== 10. ЗАПУСК ================== */
     drawTraces();
     drawComponents();
-    updateBoard(); 
-    
-    if ('serviceWorker' in navigator) {
-      if (location.protocol === 'http:' || location.protocol === 'https:') {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW reg failed:', err));
-        });
-      }
-    }
+    updateBoard();
   </script>
 </body>
 </html>
