@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="Morse">
 <meta name="mobile-web-app-capable" content="yes">
 <style>
-:root{--bg:#0a0c10;--board-bg:#12161a;--gold:#c9a227;--gold-bright:#f0c94a;--gold-dim:#5c4711;--green:#39ff88;--red:#ff3333;--text:#fff;--control-width:clamp(45px,9vw,75px)}
+:root{--bg:#0a0c10;--board-bg:#12161a;--gold:#c9a227;--gold-bright:#f0c94a;--gold-dim:#5c4711;--green:#39ff88;--red:#ff3333;--text:#fff;--control-width:clamp(40px,7vw,60px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
 body{margin:0;height:100dvh;background:var(--bg);color:var(--text);font-family:'Courier New',monospace;display:flex;flex-direction:column;align-items:center;overflow:hidden}
 .app-container{display:flex;flex-direction:column;width:100vw;height:100dvh}
@@ -24,6 +24,9 @@ header{width:100%;flex:0 0 auto;display:flex;flex-direction:column;align-items:c
 #decoded{font-size:2rem;color:var(--green);min-height:1.4em;text-align:center;letter-spacing:2px;font-weight:bold;text-shadow:0 0 15px rgba(57,255,136,.4);font-family:monospace;display:flex;justify-content:center;align-items:center;gap:8px;width:100%;overflow:hidden;white-space:nowrap;padding:0 10px}
 #final-text{color:#fff;text-shadow:none;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0}
 #current-char{color:var(--gold);text-shadow:0 0 10px rgba(201,162,39,.5);flex:0 0 auto}
+.ind{display:none;font-size:1em;opacity:.85;line-height:1}
+.ind.on{display:inline-block;animation:indPulse 1.2s ease-in-out infinite}
+@keyframes indPulse{0%,100%{opacity:.6}50%{opacity:1}}
 .main-content{display:flex;flex:1;flex-direction:row;width:100%;overflow:hidden;position:relative}
 .spacer-left{flex:0 0 var(--control-width)}
 .controls-right{flex:0 0 var(--control-width);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:20px;padding:10px 0;z-index:10}
@@ -57,6 +60,7 @@ button.tool-btn-gold:active{border-bottom:2px solid #4a3810}
 .setting-row label{flex:1}
 input[type=range]{width:60%;accent-color:var(--green)}
 input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);cursor:pointer}
+input[type=range]:disabled,input[type=checkbox]:disabled{opacity:.4;cursor:not-allowed}
 .hint{font-size:.75rem;color:#7a828c;margin-top:4px}
 #status{font-size:.9rem;color:#7a828c;margin-top:30px;text-align:center}
 .pcb-bg{fill:var(--board-bg)}
@@ -66,9 +70,9 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);cursor:poin
 .pad-shape{fill:var(--board-bg);stroke:var(--gold);stroke-width:3;transition:all .15s}
 .pad-shape.rect-shape.active{fill:var(--red);stroke:#fff;filter:drop-shadow(0 0 10px var(--red))}
 .pad-shape.circle-shape.active{fill:var(--green);stroke:#fff;filter:drop-shadow(0 0 10px var(--green))}
-.antenna{stroke:#7a828c;fill:none;stroke-width:4;transition:stroke .15s,filter .15s;cursor:pointer;touch-action:none}
-.antenna:hover{stroke:var(--gold)}
+.antenna{stroke:#7a828c;fill:none;stroke-width:4;pointer-events:none;transition:stroke .15s,filter .15s}
 .antenna.active{stroke:#fff;filter:drop-shadow(0 0 8px #fff)}
+.antenna-hit{fill:transparent;pointer-events:all;cursor:pointer;touch-action:none}
 .pad-text{fill:var(--text);font-family:Arial,sans-serif;font-size:20px;font-weight:900;text-anchor:middle;dominant-baseline:middle;pointer-events:none;stroke:var(--bg);stroke-width:5px;paint-order:stroke fill}
 .board-title{fill:#7a828c;font-family:sans-serif;font-size:24px;font-weight:bold;letter-spacing:4px;opacity:.8}
 #ios-hint{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:900;background:rgba(20,24,29,.95);color:var(--text);border:1px solid var(--gold);border-radius:12px;padding:12px 16px;font-size:.8rem;max-width:320px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.8);display:none}
@@ -80,10 +84,13 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);cursor:poin
 @media (orientation: landscape) {
   #bg-portrait { display: none; }
 }
+@media (orientation: landscape) and (max-width: 1000px) {
+  .spacer-left { display: none; }
+}
 @media (orientation: portrait) {
   #bg-landscape { display: none; }
-  #morse-display { font-size: .9rem; letter-spacing: 4px; }
-  #decoded { font-size: 1.5rem; }
+  #morse-display { font-size: 1rem; letter-spacing: 4px; }
+  #decoded { font-size: 1.7rem; }
   .main-content { flex-direction: column; }
   .spacer-left { display: none; }
   .controls-right {
@@ -91,12 +98,16 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);cursor:poin
     flex-direction: row;
     width: 100%;
     justify-content: center;
-    gap: 15px;
-    padding: 12px 0 20px;
+    gap: 20px;
+    padding: 16px 0 24px;
     border-top: 1px solid #1a1e24;
     background: var(--bg);
   }
   .board-container { width: 100%; }
+  .pad-text { font-size: 36px; stroke-width: 7px; }
+  .board-title { font-size: 36px; letter-spacing: 6px; }
+  .side-btn { width: clamp(55px,14vw,75px); height: clamp(55px,14vw,75px); font-size: .8rem; }
+  .main-key-btn { width: clamp(85px,22vw,115px); height: clamp(85px,22vw,115px); }
 }
 </style>
 </head>
@@ -104,8 +115,13 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);cursor:poin
 
 <div class="app-container">
   <header>
-    <div id="morse-display"></div>
-    <div id="decoded"><span id="final-text"></span><span id="current-char"></span></div>
+    <div id="morse-display" aria-live="polite" aria-atomic="true"></div>
+    <div id="decoded" aria-live="polite" aria-atomic="true">
+      <span id="final-text"></span>
+      <span id="current-char"></span>
+      <span id="ind-mic" class="ind" title="Микрофон активен" aria-label="Микрофон активен">🎤</span>
+      <span id="ind-torch" class="ind" title="Фонарик активен" aria-label="Фонарик активен">🔦</span>
+    </div>
   </header>
 
   <div class="main-content">
@@ -113,25 +129,27 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);cursor:poin
     <div class="board-container">
       <svg id="settings-btn" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
 
-      <svg id="board-svg" viewBox="-20 20 1080 440" preserveAspectRatio="xMidYMid meet">
+      <svg id="board-svg" viewBox="30 20 1020 440" preserveAspectRatio="xMidYMid meet">
         <!-- === ФОН ЛАНДШАФТ === -->
         <g id="bg-landscape">
-          <rect x="-20" y="20" width="1120" height="440" class="pcb-bg"/>
-          <pattern id="pcb-dots-L" x="-20" y="20" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" class="pcb-dots"/></pattern>
-          <rect x="-20" y="20" width="1120" height="440" fill="url(#pcb-dots-L)"/>
+          <rect x="30" y="20" width="1020" height="440" class="pcb-bg"/>
+          <pattern id="pcb-dots-L" x="30" y="20" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" class="pcb-dots"/></pattern>
+          <rect x="30" y="20" width="1020" height="440" fill="url(#pcb-dots-L)"/>
           <text x="140" y="60" class="board-title">MORSE</text>
           <text x="840" y="60" class="board-title">CODE</text>
-          <path class="antenna antenna-symbol" d="M 520 35 L 520 85 M 490 85 L 550 85 M 505 100 L 535 100 L 520 85 Z"/>
+          <rect class="antenna-hit" x="460" y="20" width="120" height="100"/>
+          <path class="antenna" d="M 520 35 L 520 85 M 490 85 L 550 85 M 505 100 L 535 100 L 520 85 Z"/>
         </g>
         <!-- === ФОН ПОРТРЕТ === -->
         <g id="bg-portrait">
-          <rect x="10" y="80" width="1080" height="1040" rx="30" class="pcb-bg"/>
-          <pattern id="pcb-dots-P" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" class="pcb-dots"/></pattern>
-          <rect x="10" y="80" width="1080" height="1040" rx="30" fill="url(#pcb-dots-P)"/>
-          <rect x="10" y="80" width="1080" height="1040" rx="30" fill="none" stroke="#3a2e12" stroke-width="8"/>
-          <text x="290" y="90" class="board-title">MORSE</text>
-          <text x="730" y="90" class="board-title">CODE</text>
-          <path class="antenna antenna-symbol" d="M510 90V130M490 130H530M495 145H525L510 130Z"/>
+          <rect x="60" y="70" width="1000" height="1000" rx="30" class="pcb-bg"/>
+          <pattern id="pcb-dots-P" x="60" y="70" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" class="pcb-dots"/></pattern>
+          <rect x="60" y="70" width="1000" height="1000" rx="30" fill="url(#pcb-dots-P)"/>
+          <rect x="60" y="70" width="1000" height="1000" rx="30" fill="none" stroke="#3a2e12" stroke-width="8"/>
+          <text x="290" y="120" class="board-title">MORSE</text>
+          <text x="730" y="120" class="board-title">CODE</text>
+          <rect class="antenna-hit" x="440" y="60" width="140" height="130"/>
+          <path class="antenna" d="M510 90V130M490 130H530M495 145H525L510 130Z"/>
           <g opacity=".6">
             <circle cx="510" cy="950" r="12" fill="none" stroke="#7a828c" stroke-width="4"/>
             <path d="M485 925a35 35 0 0 0 0 50M470 910a50 50 0 0 0 0 80M535 925a35 35 0 0 1 0 50M550 910a50 50 0 0 1 0 80" fill="none" stroke="#7a828c" stroke-width="4" stroke-linecap="round"/>
@@ -163,8 +181,9 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);cursor:poin
     </div>
     <div class="setting-row"><label>Тон: <span id="tone-val">700 Гц</span></label><input type="range" id="tone" min="400" max="1000" value="700" step="50"></div>
     <div class="setting-row"><label>Громкость:</label><input type="range" id="vol" min="0" max="1" value="0.5" step="0.1"></div>
+    <div class="setting-row"><label>Порог точки: <span id="dot-val">200 мс</span></label><input type="range" id="dot-threshold" min="150" max="400" value="200" step="10"></div>
   </div>
-  <div id="status">KEY: короткое — ТОЧКА, длинное — ТИРЕ.<br>Антенна: тап — повтор, удержание &gt;3с — цикл.<br>RESET: тап — удалить символ, удержание — очистить.</div>
+  <div id="status">KEY: короткое — ТОЧКА, длинное — ТИРЕ.<br>Антенна: тап — повтор/стоп, удержание &gt;3с — цикл.<br>RESET: тап — удалить символ, удержание — очистить.</div>
 </div>
 
 <div id="ios-hint"><span class="close-hint" id="close-ios-hint">✕</span>Установите приложение: нажмите <b>«Поделиться»</b> <br>и выберите <b>«На экран „Домой“»</b></div>
@@ -176,7 +195,7 @@ const storage=(()=>{
   catch{const d={};return{getItem:k=>k in d?d[k]:null,setItem:(k,v)=>{d[k]=String(v);},removeItem:k=>{delete d[k];}};}
 })();
 
-/* ===================== NODES (Landscape + Portrait) ===================== */
+/* ===================== NODES ===================== */
 const NODES={
   root:{xL:520,yL:110,xP:510,yP:140,shape:'none',code:'',parent:null},
   T:{xL:240,yL:150,xP:350,yP:230,shape:'rect-h',code:'-',parent:'root'},
@@ -209,8 +228,8 @@ const NODES={
 const MORSE_MAP={};
 for(const k in NODES) if(NODES[k].code) MORSE_MAP[k]=NODES[k].code;
 
-const VIEWBOX={landscape:'-20 20 1080 440',portrait:'0 0 1100 1200'};
-const SIZES={landscape:{r:12,w:36,h:12,rx:3},portrait:{r:16,w:52,h:16,rx:4}};
+const VIEWBOX={landscape:'30 20 1020 440',portrait:'60 70 1000 1000'};
+const SIZES={landscape:{r:12,w:36,h:12,rx:3},portrait:{r:22,w:72,h:22,rx:6}};
 let currentMode=window.matchMedia('(orientation: portrait)').matches?'portrait':'landscape';
 
 const $=id=>document.getElementById(id);
@@ -231,6 +250,38 @@ let torchEnabled=storage.getItem('torch')==='1';
 let torchStream=null, torchTrack=null, torchIniting=false, flashTimer=null;
 let looping=false, willLoop=false, antennaTimer=null, antennaPressStart=0;
 let abortPlayback=false, replayInProgress=false;
+let dotThreshold=200;
+const canVibrate=typeof navigator.vibrate==='function';
+
+/* ===================== PERSISTENCE ===================== */
+const STATE_KEY='morse_state', SETTINGS_KEY='morse_settings';
+const STATE_TTL=7*24*60*60*1000;
+let stateLoaded=false;
+
+function saveState(){
+  if(!stateLoaded) return;
+  try{storage.setItem(STATE_KEY,JSON.stringify({finalText,finalMorseText,ts:Date.now()}));}catch{}
+}
+function loadState(){
+  try{
+    const raw=storage.getItem(STATE_KEY);if(!raw)return;
+    const s=JSON.parse(raw);
+    if(Date.now()-(s.ts||0)>STATE_TTL){storage.removeItem(STATE_KEY);return;}
+    finalText=s.finalText||'';
+    finalMorseText=s.finalMorseText||'';
+  }catch{}
+}
+function saveSettings(){
+  try{storage.setItem(SETTINGS_KEY,JSON.stringify({tone:currentTone,vol:currentVolume,dot:dotThreshold}));}catch{}
+}
+function loadSettings(){
+  try{
+    const s=JSON.parse(storage.getItem(SETTINGS_KEY)||'{}');
+    if(typeof s.tone==='number') currentTone=s.tone;
+    if(typeof s.vol==='number') currentVolume=s.vol;
+    if(typeof s.dot==='number') dotThreshold=s.dot;
+  }catch{}
+}
 
 /* ===================== VIBRO ===================== */
 const vibrate=p=>{if(vibroEnabled) navigator.vibrate?.(p);};
@@ -299,11 +350,12 @@ function highlightPath(char){
 function updateBoard(){
   resetLights();
   finalTextEl.textContent=finalText?finalText+' ':'';
-  if(!inputPath){currentCharEl.textContent='';morseDisplayEl.textContent=finalMorseText.trim();return;}
+  if(!inputPath){currentCharEl.textContent='';morseDisplayEl.textContent=finalMorseText.trim();saveState();return;}
   morseDisplayEl.textContent=(finalMorseText+' '+inputPath.split('').join(' ')).trim();
   const char=Object.keys(MORSE_MAP).find(k=>MORSE_MAP[k]===inputPath);
   currentCharEl.textContent=char||'?';
   if(char) highlightPath(char);
+  saveState();
 }
 function finalizeLetter(){
   if(!inputPath) return;
@@ -368,7 +420,8 @@ async function playCode(code,unit=100){
   await sleep(unit*2);
 }
 async function replayOnce(){
-  if(!finalText||replayInProgress) return;
+  if(!finalText) return;
+  if(replayInProgress){abortPlayback=true;return;}
   replayInProgress=true;abortPlayback=false;
   try{
     for(const char of finalText.trim()){
@@ -382,45 +435,55 @@ async function replayOnce(){
   }finally{replayInProgress=false;resetLights();}
 }
 
-/* ===================== KEY ===================== */
+/* ===================== KEY (pointer events) ===================== */
 function handlePressStart(e){
-  e.preventDefault();clearTimeout(inputTimer);currentCharEl.classList.remove('finalizing');
+  if(e.pointerType==='mouse'&&e.button!==0) return;
+  e.preventDefault();
+  abortPlayback=true;
+  clearTimeout(inputTimer);currentCharEl.classList.remove('finalizing');
   morseKey.classList.add('active');pressStartTime=performance.now();startContinuousTone();
 }
 function handlePressEnd(e){
   if(e) e.preventDefault();
   if(!pressStartTime) return;
   morseKey.classList.remove('active');stopContinuousTone();
-  const isDot=performance.now()-pressStartTime<200;pressStartTime=0;
+  const isDot=performance.now()-pressStartTime<dotThreshold;pressStartTime=0;
   inputPath+=isDot?'.':'-';updateBoard();
   morseKey.classList.remove('blink-green','blink-red');
   morseKey.classList.add(isDot?'blink-green':'blink-red');
   setTimeout(()=>morseKey.classList.remove('blink-green','blink-red'),isDot?150:450);
+  currentCharEl.classList.remove('finalizing');void currentCharEl.offsetWidth;currentCharEl.classList.add('finalizing');
   inputTimer=setTimeout(finalizeLetter,800);
 }
-morseKey.addEventListener('mousedown',handlePressStart);
-morseKey.addEventListener('touchstart',handlePressStart,{passive:false});
-morseKey.addEventListener('mouseup',handlePressEnd);
-morseKey.addEventListener('touchend',handlePressEnd);
+morseKey.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse'&&e.button!==0) return;
+  morseKey.setPointerCapture?.(e.pointerId);
+  handlePressStart(e);
+});
+morseKey.addEventListener('pointerup',handlePressEnd);
 morseKey.addEventListener('pointercancel',handlePressEnd);
-morseKey.addEventListener('mouseleave',()=>pressStartTime&&handlePressEnd());
-
-/* ===================== SPACE ===================== */
-$('btn-space').addEventListener('click',()=>{
-  clearTimeout(inputTimer);finalizeLetter();
-  finalText+=' ';finalMorseText+='/ ';updateBoard();
+morseKey.addEventListener('pointerleave',e=>{
+  if(e.pointerType==='mouse'&&pressStartTime) handlePressEnd(e);
 });
 
-/* ===================== RESET ===================== */
+/* ===================== SPACE / RESET ===================== */
+function addSpace(){
+  clearTimeout(inputTimer);finalizeLetter();
+  finalText+=' ';finalMorseText+='/ ';updateBoard();
+}
+function resetAll(){
+  clearTimeout(inputTimer);
+  inputPath='';finalText='';finalMorseText='';
+  updateBoard();vibrate(80);
+}
+$('btn-space').addEventListener('click',addSpace);
+
 let resetTimer=null,resetLongFired=false;
 function handleResetStart(e){
-  e.preventDefault();resetLongFired=false;clearTimeout(resetTimer);
-  resetTimer=setTimeout(()=>{
-    resetLongFired=true;
-    clearTimeout(inputTimer);
-    inputPath='';finalText='';finalMorseText='';
-    updateBoard();vibrate(80);
-  },500);
+  if(e.pointerType==='mouse'&&e.button!==0) return;
+  e.preventDefault();
+  resetLongFired=false;clearTimeout(resetTimer);
+  resetTimer=setTimeout(()=>{resetLongFired=true;resetAll();},500);
 }
 function handleResetEnd(e){
   e.preventDefault();clearTimeout(resetTimer);resetTimer=null;
@@ -432,14 +495,12 @@ function handleResetEnd(e){
   resetLongFired=false;
 }
 const resetBtn=$('btn-reset');
-resetBtn.addEventListener('mousedown',handleResetStart);
-resetBtn.addEventListener('touchstart',handleResetStart,{passive:false});
-resetBtn.addEventListener('mouseup',handleResetEnd);
-resetBtn.addEventListener('touchend',handleResetEnd);
+resetBtn.addEventListener('pointerdown',e=>{resetBtn.setPointerCapture?.(e.pointerId);handleResetStart(e);});
+resetBtn.addEventListener('pointerup',handleResetEnd);
 resetBtn.addEventListener('pointercancel',handleResetEnd);
-resetBtn.addEventListener('mouseleave',e=>{if(resetTimer)handleResetEnd(e);});
+resetBtn.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&resetTimer)handleResetEnd(e);});
 
-/* ===================== ANTENNA (обе ориентации) ===================== */
+/* ===================== ANTENNA ===================== */
 async function runLoop(){
   while(looping){
     await replayOnce();
@@ -448,8 +509,10 @@ async function runLoop(){
   }
 }
 function handleAntennaStart(e){
+  if(e.pointerType==='mouse'&&e.button!==0) return;
   e.preventDefault();
   if(looping){looping=false;abortPlayback=true;return;}
+  if(replayInProgress){abortPlayback=true;return;}
   antennaPressStart=performance.now();willLoop=false;
   clearTimeout(antennaTimer);
   antennaTimer=setTimeout(()=>{willLoop=true;vibrate(100);},3000);
@@ -462,16 +525,28 @@ function handleAntennaEnd(e){
   if(wasLong){looping=true;runLoop();}
   else if(wasShort){replayOnce();}
 }
-document.querySelectorAll('.antenna-symbol').forEach(el=>{
-  el.addEventListener('mousedown',handleAntennaStart);
-  el.addEventListener('mouseup',handleAntennaEnd);
-  el.addEventListener('mouseleave',e=>{if(antennaPressStart)handleAntennaEnd(e);});
-  el.addEventListener('touchstart',handleAntennaStart,{passive:false});
-  el.addEventListener('touchend',handleAntennaEnd);
+document.querySelectorAll('.antenna-hit').forEach(el=>{
+  el.addEventListener('pointerdown',e=>{el.setPointerCapture?.(e.pointerId);handleAntennaStart(e);});
+  el.addEventListener('pointerup',handleAntennaEnd);
   el.addEventListener('pointercancel',handleAntennaEnd);
+  el.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&antennaPressStart)handleAntennaEnd(e);});
 });
 
-/* ===================== DRAW (mode-aware) ===================== */
+/* ===================== KEYBOARD ===================== */
+function kbKeyDown(e){
+  if(modal.classList.contains('open')) return;
+  if(e.code==='Space'&&!e.repeat){e.preventDefault();
+    if(!pressStartTime){abortPlayback=true;clearTimeout(inputTimer);currentCharEl.classList.remove('finalizing');
+      morseKey.classList.add('active');pressStartTime=performance.now();startContinuousTone();}
+  }
+  else if(e.code==='Enter'){e.preventDefault();addSpace();}
+  else if(e.code==='Escape'){e.preventDefault();resetAll();}
+}
+function kbKeyUp(e){
+  if(e.code==='Space'&&pressStartTime){e.preventDefault();handlePressEnd();}
+}
+
+/* ===================== DRAW ===================== */
 function drawTraces(mode){
   const g=$('traces-group');g.innerHTML='';
   for(const ch in NODES){
@@ -495,6 +570,8 @@ function drawComponents(mode){
     const n=NODES[ch],{x,y}=getXY(n,mode);
     const grp=mkEl('g');grp.style.cursor='pointer';
     grp.addEventListener('click',async()=>{
+      if(replayInProgress){abortPlayback=true;await sleep(350);}
+      abortPlayback=false;
       clearTimeout(inputTimer);resetLights();
       const path=[];let c=ch;
       while(c!=='root'){path.unshift(c);c=NODES[c].parent;}
@@ -515,13 +592,9 @@ function drawComponents(mode){
       : mkEl('rect',{x:x-S.w/2,y:y-S.h/2,width:S.w,height:S.h,rx:S.rx});
     shape.setAttribute('class',`pad-shape ${isCircle?'circle-shape':'rect-shape'}`);
     shape.id=`node-${ch}`;
-    // Позиция подписи
     let ty;
-    if(mode==='portrait'){
-      ty = y>=700 ? y+32 : (isCircle ? y-28 : y-26);
-    } else {
-      ty = y===390 ? y+24 : (isCircle ? y-20 : y-18);
-    }
+    if(mode==='portrait') ty = y>=700 ? y+40 : (isCircle ? y-32 : y-30);
+    else ty = y===390 ? y+24 : (isCircle ? y-20 : y-18);
     grp.append(shape, mkEl('text',{x,y:ty,class:'pad-text',id:`text-${ch}`},ch));
     g.appendChild(grp);
   }
@@ -545,11 +618,27 @@ function switchMode(newMode){
 const modal=$('settings-modal');
 $('settings-btn').addEventListener('click',()=>modal.classList.add('open'));
 $('close-modal').addEventListener('click',()=>modal.classList.remove('open'));
-$('tone').addEventListener('input',e=>{currentTone=+e.target.value;$('tone-val').textContent=currentTone+' Гц';});
-$('vol').addEventListener('input',e=>{currentVolume=+e.target.value;});
+
+$('tone').value=currentTone;
+$('tone-val').textContent=currentTone+' Гц';
+$('tone').addEventListener('input',e=>{currentTone=+e.target.value;$('tone-val').textContent=currentTone+' Гц';saveSettings();});
+
+$('vol').value=currentVolume;
+$('vol').addEventListener('input',e=>{currentVolume=+e.target.value;saveSettings();});
+
+$('dot-threshold').value=dotThreshold;
+$('dot-val').textContent=dotThreshold+' мс';
+$('dot-threshold').addEventListener('input',e=>{dotThreshold=+e.target.value;$('dot-val').textContent=dotThreshold+' мс';saveSettings();});
+
 const setStatus=msg=>$('status').textContent=msg;
 
 $('vibro-toggle').checked=vibroEnabled;
+if(!canVibrate){
+  $('vibro-toggle').disabled=true;
+  $('vibro-toggle').checked=false;
+  vibroEnabled=false;
+  $('vibro-toggle').parentElement.insertAdjacentHTML('beforeend','<div class="hint">Не поддерживается на этом устройстве (iOS)</div>');
+}
 $('vibro-toggle').addEventListener('change',e=>{
   vibroEnabled=e.target.checked;
   storage.setItem('vibro',vibroEnabled?'1':'0');
@@ -562,9 +651,11 @@ $('torch-toggle').addEventListener('change',async e=>{
     const ok=await ensureTorch();
     if(!ok){e.target.checked=false;setStatus('Фонарик недоступен на этом устройстве');return;}
     torchEnabled=true;storage.setItem('torch','1');
+    $('ind-torch').classList.add('on');
     setTorch(true);setTimeout(()=>{if(!flashTimer)setTorch(false);},300);
   } else {
     torchEnabled=false;storage.setItem('torch','0');
+    $('ind-torch').classList.remove('on');
     torchOffHold();setTimeout(releaseTorch,150);
   }
 });
@@ -582,14 +673,16 @@ async function toggleMic(){
     micLastTone=false;micToneStart=0;micToneEnd=0;
     if(inputPath) finalizeLetter();
     morseKey.classList.remove('blink-red');
+    $('ind-mic').classList.remove('on');
     setStatus('Микрофон выключен');return;
   }
   try{
-    micStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
     micAnalyser=audioCtx.createAnalyser();micAnalyser.fftSize=1024;micAnalyser.smoothingTimeConstant=0.6;
     audioCtx.createMediaStreamSource(micStream).connect(micAnalyser);
     micData=new Uint8Array(micAnalyser.frequencyBinCount);
     micActive=true;inputPath='';micLastTone=false;micToneStart=0;micToneEnd=0;
+    $('ind-mic').classList.add('on');
     setStatus('Слушаю... (Beta)');
     micAnimId=requestAnimationFrame(processMic);
   } catch { setStatus('Ошибка микрофона (нет доступа)'); }
@@ -606,7 +699,7 @@ function processMic(){
   else if(!present&&micLastTone){
     micToneEnd=now;morseKey.classList.remove('blink-red');
     const dur=micToneEnd-micToneStart;
-    if(dur>50&&dur<500){inputPath+=dur<200?'.':'-';updateBoard();}
+    if(dur>50&&dur<500){inputPath+=dur<dotThreshold?'.':'-';updateBoard();}
   }
   micLastTone=present;
   if(!present&&inputPath&&micToneEnd&&now-micToneEnd>800){finalizeLetter();micToneEnd=0;}
@@ -625,13 +718,14 @@ function safetyStop(){
     micStream=null;micActive=false;
     micLastTone=false;micToneStart=0;micToneEnd=0;
     morseKey.classList.remove('blink-red');
+    $('ind-mic').classList.remove('on');
   }
   torchOffHold();stopKeyVibrate();looping=false;abortPlayback=true;
 }
 window.addEventListener('blur',safetyStop);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)safetyStop();});
 
-/* ===================== ORIENTATION WATCHER ===================== */
+/* ===================== ORIENTATION ===================== */
 let resizeTimer=null;
 function detectMode(){return window.matchMedia('(orientation: portrait)').matches?'portrait':'landscape';}
 window.addEventListener('resize',()=>{
@@ -669,6 +763,12 @@ if('serviceWorker' in navigator){
 }
 
 /* ===================== INIT ===================== */
+loadSettings();
+loadState();
+stateLoaded=true;
+if(torchEnabled) $('ind-torch').classList.add('on');
+window.addEventListener('keydown',kbKeyDown);
+window.addEventListener('keyup',kbKeyUp);
 applyMode(currentMode);
 </script>
 </body>
