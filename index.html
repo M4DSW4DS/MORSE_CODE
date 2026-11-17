@@ -23,6 +23,8 @@ header{width:100%;flex:0 0 auto;display:flex;flex-direction:column;align-items:c
 #morse-display{font-size:1.1rem;color:var(--gold);letter-spacing:6px;font-family:monospace;font-weight:bold;min-height:1.3em;text-align:center;text-shadow:0 0 10px rgba(201,162,39,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 10px;max-width:100%}
 #decoded{font-size:2rem;color:var(--green);min-height:1.4em;text-align:center;letter-spacing:2px;font-weight:bold;text-shadow:0 0 15px rgba(57,255,136,.4);font-family:monospace;display:flex;justify-content:center;align-items:center;gap:8px;width:100%;overflow:hidden;white-space:nowrap;padding:0 10px}
 #final-text{color:#fff;text-shadow:none;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0}
+#final-text span{transition:color .1s,text-shadow .1s,transform .15s;display:inline-block}
+#final-text span.playing{color:var(--gold-bright);text-shadow:0 0 12px var(--gold-bright);font-weight:900;transform:scale(1.15)}
 #current-char{color:var(--gold);text-shadow:0 0 10px rgba(201,162,39,.5);flex:0 0 auto}
 .ind{display:none;font-size:1em;opacity:.85;line-height:1}
 .ind.on{display:inline-block;animation:indPulse 1.2s ease-in-out infinite}
@@ -80,29 +82,15 @@ input[type=range]:disabled,input[type=checkbox]:disabled{opacity:.4;cursor:not-a
 #ios-hint b{color:var(--gold-bright)}
 #ios-hint .close-hint{position:absolute;top:4px;right:8px;cursor:pointer;color:#7a828c;font-weight:bold;font-size:1rem}
 
-/* ===================== ОРИЕНТАЦИЯ ===================== */
-@media (orientation: landscape) {
-  #bg-portrait { display: none; }
-}
-@media (orientation: landscape) and (max-width: 1000px) {
-  .spacer-left { display: none; }
-}
+@media (orientation: landscape) { #bg-portrait { display: none; } }
+@media (orientation: landscape) and (max-width: 1000px) { .spacer-left { display: none; } }
 @media (orientation: portrait) {
   #bg-landscape { display: none; }
   #morse-display { font-size: 1rem; letter-spacing: 4px; }
   #decoded { font-size: 1.7rem; }
   .main-content { flex-direction: column; }
   .spacer-left { display: none; }
-  .controls-right {
-    flex: 0 0 auto;
-    flex-direction: row;
-    width: 100%;
-    justify-content: center;
-    gap: 20px;
-    padding: 16px 0 24px;
-    border-top: 1px solid #1a1e24;
-    background: var(--bg);
-  }
+  .controls-right { flex: 0 0 auto; flex-direction: row; width: 100%; justify-content: center; gap: 20px; padding: 16px 0 24px; border-top: 1px solid #1a1e24; background: var(--bg); }
   .board-container { width: 100%; }
   .pad-text { font-size: 36px; stroke-width: 7px; }
   .board-title { font-size: 36px; letter-spacing: 6px; }
@@ -130,7 +118,6 @@ input[type=range]:disabled,input[type=checkbox]:disabled{opacity:.4;cursor:not-a
       <svg id="settings-btn" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
 
       <svg id="board-svg" viewBox="30 20 1020 440" preserveAspectRatio="xMidYMid meet">
-        <!-- === ФОН ЛАНДШАФТ === -->
         <g id="bg-landscape">
           <rect x="30" y="20" width="1020" height="440" class="pcb-bg"/>
           <pattern id="pcb-dots-L" x="30" y="20" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" class="pcb-dots"/></pattern>
@@ -140,7 +127,6 @@ input[type=range]:disabled,input[type=checkbox]:disabled{opacity:.4;cursor:not-a
           <rect class="antenna-hit" x="460" y="20" width="120" height="100"/>
           <path class="antenna" d="M 520 35 L 520 85 M 490 85 L 550 85 M 505 100 L 535 100 L 520 85 Z"/>
         </g>
-        <!-- === ФОН ПОРТРЕТ === -->
         <g id="bg-portrait">
           <rect x="60" y="70" width="1000" height="1000" rx="30" class="pcb-bg"/>
           <pattern id="pcb-dots-P" x="60" y="70" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" class="pcb-dots"/></pattern>
@@ -248,6 +234,8 @@ let continuousToneOsc=null, continuousToneGain=null;
 let vibroEnabled=storage.getItem('vibro')==='1';
 let torchEnabled=storage.getItem('torch')==='1';
 let torchStream=null, torchTrack=null, torchIniting=false, flashTimer=null;
+let torchState=false;
+let torchChain=Promise.resolve();
 let looping=false, willLoop=false, antennaTimer=null, antennaPressStart=0;
 let abortPlayback=false, replayInProgress=false;
 let dotThreshold=200;
@@ -297,8 +285,17 @@ function stopKeyVibrate(){
   if(navigator.vibrate) navigator.vibrate(0);
 }
 
-/* ===================== TORCH ===================== */
-function setTorch(on){if(!torchTrack)return;torchTrack.applyConstraints({advanced:[{torch:on}]}).catch(()=>{});}
+/* ===================== TORCH (очередь + состояние) ===================== */
+function setTorch(on){
+  if(!torchTrack || torchState===on) return;
+  torchChain=torchChain.then(async()=>{
+    if(!torchTrack || torchState===on) return;
+    try{
+      await torchTrack.applyConstraints({advanced:[{torch:on}]});
+      torchState=on;
+    }catch{}
+  });
+}
 async function ensureTorch(){
   if(torchTrack) return true;
   if(torchIniting) return false;
@@ -309,13 +306,14 @@ async function ensureTorch(){
     const t=s.getVideoTracks()[0];
     const caps=t.getCapabilities?t.getCapabilities():{};
     if(!caps.torch){s.getTracks().forEach(x=>x.stop());return false;}
-    torchStream=s;torchTrack=t;return true;
+    torchStream=s;torchTrack=t;torchState=false;
+    return true;
   }catch{return false;}
   finally{torchIniting=false;}
 }
 function releaseTorch(){
   if(torchStream){torchStream.getTracks().forEach(t=>t.stop());torchStream=null;}
-  torchTrack=null;clearTimeout(flashTimer);flashTimer=null;
+  torchTrack=null;torchState=false;clearTimeout(flashTimer);flashTimer=null;
 }
 function triggerFlash(ms){
   if(!torchEnabled) return;
@@ -326,7 +324,7 @@ function triggerFlash(ms){
 }
 function torchOnHold(){
   if(!torchEnabled) return;
-  if(!torchTrack){ensureTorch().then(ok=>{if(ok)setTorch(true);});return;}
+  if(!torchTrack){ensureTorch().then(ok=>{if(ok)torchOnHold();});return;}
   clearTimeout(flashTimer);flashTimer=null;setTorch(true);
 }
 function torchOffHold(){
@@ -346,10 +344,24 @@ function highlightPath(char){
   }
 }
 
+/* ===================== FINAL TEXT RENDER ===================== */
+function renderFinalText(playingIdx){
+  if(!finalText){finalTextEl.textContent='';return;}
+  finalTextEl.innerHTML='';
+  for(let i=0;i<finalText.length;i++){
+    const c=finalText[i];
+    const span=document.createElement('span');
+    span.textContent=c===' '?'\u00A0':c;
+    if(i===playingIdx) span.className='playing';
+    finalTextEl.appendChild(span);
+  }
+  finalTextEl.appendChild(document.createTextNode(' '));
+}
+
 /* ===================== BOARD STATE ===================== */
 function updateBoard(){
   resetLights();
-  finalTextEl.textContent=finalText?finalText+' ':'';
+  renderFinalText(-1);
   if(!inputPath){currentCharEl.textContent='';morseDisplayEl.textContent=finalMorseText.trim();saveState();return;}
   morseDisplayEl.textContent=(finalMorseText+' '+inputPath.split('').join(' ')).trim();
   const char=Object.keys(MORSE_MAP).find(k=>MORSE_MAP[k]===inputPath);
@@ -419,20 +431,32 @@ async function playCode(code,unit=100){
   }
   await sleep(unit*2);
 }
+
+/* ===================== REPLAY (с подсветкой буквы) ===================== */
 async function replayOnce(){
   if(!finalText) return;
   if(replayInProgress){abortPlayback=true;return;}
   replayInProgress=true;abortPlayback=false;
   try{
-    for(const char of finalText.trim()){
+    for(let i=0;i<finalText.length;i++){
       if(abortPlayback) break;
+      const char=finalText[i];
       if(char===' '){await sleep(400);continue;}
-      const node=NODES[char];if(!node)continue;
+      const node=NODES[char];
+      if(!node) continue;
+      renderFinalText(i);
+      currentCharEl.textContent=char;
       highlightPath(char);
       await playCode(node.code,100);
       resetLights();
+      if(!abortPlayback) await sleep(100);
     }
-  }finally{replayInProgress=false;resetLights();}
+  }finally{
+    replayInProgress=false;
+    renderFinalText(-1);
+    currentCharEl.textContent='';
+    resetLights();
+  }
 }
 
 /* ===================== KEY (pointer events) ===================== */
