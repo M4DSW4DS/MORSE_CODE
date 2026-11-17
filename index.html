@@ -44,7 +44,7 @@ header{width:100%;flex:0 0 auto;display:flex;flex-direction:column;align-items:c
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}
 .modal-header h2{margin:0;color:var(--gold);font-size:1.5rem;letter-spacing:2px}
 .close-modal{background:none;border:none;color:var(--text);font-size:2rem;cursor:pointer;padding:0}
-.controls{display:flex;flex-direction:column;gap:15px;width:100%;max-width:500px;margin:0 auto}
+.modal-controls{display:flex;flex-direction:column;gap:15px;width:100%;max-width:500px;margin:0 auto}
 button.tool-btn{background:linear-gradient(to bottom,#2a3038,#1a1e24);color:var(--gold);border:1px solid #3a4048;border-bottom:4px solid #0a0c10;border-radius:12px;padding:15px;font-family:inherit;font-size:1.1rem;font-weight:bold;cursor:pointer;transition:transform .05s}
 button.tool-btn:active{transform:translateY(2px);border-bottom:2px solid #0a0c10}
 button.tool-btn-gold{background:linear-gradient(to bottom,var(--gold-bright),var(--gold));color:#0a0c10;border:1px solid #8a6e1a;border-bottom:4px solid #4a3810}
@@ -75,6 +75,29 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);cursor:poin
 #ios-hint.visible{display:block}
 #ios-hint b{color:var(--gold-bright)}
 #ios-hint .close-hint{position:absolute;top:4px;right:8px;cursor:pointer;color:#7a828c;font-weight:bold;font-size:1rem}
+
+/* ===================== ОРИЕНТАЦИЯ ===================== */
+@media (orientation: landscape) {
+  #bg-portrait { display: none; }
+}
+@media (orientation: portrait) {
+  #bg-landscape { display: none; }
+  #morse-display { font-size: .9rem; letter-spacing: 4px; }
+  #decoded { font-size: 1.5rem; }
+  .main-content { flex-direction: column; }
+  .spacer-left { display: none; }
+  .controls-right {
+    flex: 0 0 auto;
+    flex-direction: row;
+    width: 100%;
+    justify-content: center;
+    gap: 15px;
+    padding: 12px 0 20px;
+    border-top: 1px solid #1a1e24;
+    background: var(--bg);
+  }
+  .board-container { width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -91,12 +114,29 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);cursor:poin
       <svg id="settings-btn" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
 
       <svg id="board-svg" viewBox="-20 20 1080 440" preserveAspectRatio="xMidYMid meet">
-        <rect x="-20" y="20" width="1120" height="440" class="pcb-bg"/>
-        <pattern id="pcb-dots" x="-20" y="20" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" class="pcb-dots"/></pattern>
-        <rect x="-20" y="20" width="1120" height="440" fill="url(#pcb-dots)"/>
-        <text x="140" y="60" class="board-title">MORSE</text>
-        <text x="840" y="60" class="board-title">CODE</text>
-        <path id="antenna-symbol" class="antenna" d="M 520 35 L 520 85 M 490 85 L 550 85 M 505 100 L 535 100 L 520 85 Z"/>
+        <!-- === ФОН ЛАНДШАФТ === -->
+        <g id="bg-landscape">
+          <rect x="-20" y="20" width="1120" height="440" class="pcb-bg"/>
+          <pattern id="pcb-dots-L" x="-20" y="20" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" class="pcb-dots"/></pattern>
+          <rect x="-20" y="20" width="1120" height="440" fill="url(#pcb-dots-L)"/>
+          <text x="140" y="60" class="board-title">MORSE</text>
+          <text x="840" y="60" class="board-title">CODE</text>
+          <path class="antenna antenna-symbol" d="M 520 35 L 520 85 M 490 85 L 550 85 M 505 100 L 535 100 L 520 85 Z"/>
+        </g>
+        <!-- === ФОН ПОРТРЕТ === -->
+        <g id="bg-portrait">
+          <rect x="10" y="80" width="1080" height="1040" rx="30" class="pcb-bg"/>
+          <pattern id="pcb-dots-P" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" class="pcb-dots"/></pattern>
+          <rect x="10" y="80" width="1080" height="1040" rx="30" fill="url(#pcb-dots-P)"/>
+          <rect x="10" y="80" width="1080" height="1040" rx="30" fill="none" stroke="#3a2e12" stroke-width="8"/>
+          <text x="290" y="90" class="board-title">MORSE</text>
+          <text x="730" y="90" class="board-title">CODE</text>
+          <path class="antenna antenna-symbol" d="M510 90V130M490 130H530M495 145H525L510 130Z"/>
+          <g opacity=".6">
+            <circle cx="510" cy="950" r="12" fill="none" stroke="#7a828c" stroke-width="4"/>
+            <path d="M485 925a35 35 0 0 0 0 50M470 910a50 50 0 0 0 0 80M535 925a35 35 0 0 1 0 50M550 910a50 50 0 0 1 0 80" fill="none" stroke="#7a828c" stroke-width="4" stroke-linecap="round"/>
+          </g>
+        </g>
         <g id="traces-group"></g>
         <g id="components-group"></g>
       </svg>
@@ -111,7 +151,7 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);cursor:poin
 
 <div class="modal" id="settings-modal">
   <div class="modal-header"><h2>SETTINGS</h2><button class="close-modal" id="close-modal">✕</button></div>
-  <div class="controls">
+  <div class="modal-controls">
     <button class="tool-btn" id="btn-mic">🎤 Микрофон <span class="beta">Beta</span></button>
     <button class="tool-btn tool-btn-gold" id="install-btn" title="Установить на главный экран">⬇ Установить приложение</button>
   </div>
@@ -136,32 +176,52 @@ const storage=(()=>{
   catch{const d={};return{getItem:k=>k in d?d[k]:null,setItem:(k,v)=>{d[k]=String(v);},removeItem:k=>{delete d[k];}};}
 })();
 
+/* ===================== NODES (Landscape + Portrait) ===================== */
 const NODES={
-  root:{x:520,y:110,shape:'none',code:'',parent:null},
-  T:{x:240,y:150,shape:'rect-h',code:'-',parent:'root'}, E:{x:800,y:150,shape:'led',code:'.',parent:'root'},
-  M:{x:100,y:230,shape:'rect-h',code:'--',parent:'T'}, N:{x:380,y:230,shape:'circle',code:'-.',parent:'T'},
-  A:{x:660,y:230,shape:'rect-h',code:'.-',parent:'E'}, I:{x:940,y:230,shape:'led',code:'..',parent:'E'},
-  O:{x:60,y:310,shape:'rect-h',code:'---',parent:'M'}, G:{x:140,y:310,shape:'circle',code:'--.',parent:'M'},
-  K:{x:300,y:310,shape:'rect-h',code:'-.-',parent:'N'}, D:{x:460,y:310,shape:'circle',code:'-..',parent:'N'},
-  R:{x:600,y:310,shape:'circle',code:'.-.',parent:'A'}, W:{x:720,y:310,shape:'rect-h',code:'.--',parent:'A'},
-  S:{x:880,y:310,shape:'led',code:'...',parent:'I'}, U:{x:1000,y:310,shape:'rect-h',code:'..-',parent:'I'},
-  Q:{x:100,y:390,shape:'rect-h',code:'--.-',parent:'G'}, Z:{x:180,y:390,shape:'circle',code:'--..',parent:'G'},
-  Y:{x:260,y:390,shape:'rect-h',code:'-.--',parent:'K'}, C:{x:340,y:390,shape:'circle',code:'-.-.',parent:'K'},
-  X:{x:420,y:390,shape:'rect-h',code:'-..-',parent:'D'}, B:{x:500,y:390,shape:'circle',code:'-...',parent:'D'},
-  L:{x:600,y:390,shape:'circle',code:'.-..',parent:'R'}, J:{x:680,y:390,shape:'rect-h',code:'.---',parent:'W'},
-  P:{x:760,y:390,shape:'circle',code:'.--.',parent:'W'}, H:{x:840,y:390,shape:'led',code:'....',parent:'S'},
-  V:{x:920,y:390,shape:'rect-h',code:'...-',parent:'S'}, F:{x:1000,y:390,shape:'circle',code:'..-.',parent:'U'}
+  root:{xL:520,yL:110,xP:510,yP:140,shape:'none',code:'',parent:null},
+  T:{xL:240,yL:150,xP:350,yP:230,shape:'rect-h',code:'-',parent:'root'},
+  E:{xL:800,yL:150,xP:670,yP:230,shape:'led',code:'.',parent:'root'},
+  M:{xL:100,yL:230,xP:230,yP:230,shape:'rect-h',code:'--',parent:'T'},
+  N:{xL:380,yL:230,xP:350,yP:600,shape:'circle',code:'-.',parent:'T'},
+  A:{xL:660,yL:230,xP:670,yP:600,shape:'rect-h',code:'.-',parent:'E'},
+  I:{xL:940,yL:230,xP:790,yP:230,shape:'led',code:'..',parent:'E'},
+  O:{xL:60,yL:310,xP:110,yP:230,shape:'rect-h',code:'---',parent:'M'},
+  G:{xL:140,yL:310,xP:230,yP:330,shape:'circle',code:'--.',parent:'M'},
+  K:{xL:300,yL:310,xP:230,yP:600,shape:'rect-h',code:'-.-',parent:'N'},
+  D:{xL:460,yL:310,xP:350,yP:850,shape:'circle',code:'-..',parent:'N'},
+  R:{xL:600,yL:310,xP:790,yP:600,shape:'circle',code:'.-.',parent:'A'},
+  W:{xL:720,yL:310,xP:670,yP:850,shape:'rect-h',code:'.--',parent:'A'},
+  S:{xL:880,yL:310,xP:910,yP:230,shape:'led',code:'...',parent:'I'},
+  U:{xL:1000,yL:310,xP:790,yP:330,shape:'rect-h',code:'..-',parent:'I'},
+  Q:{xL:100,yL:390,xP:110,yP:330,shape:'rect-h',code:'--.-',parent:'G'},
+  Z:{xL:180,yL:390,xP:230,yP:460,shape:'circle',code:'--..',parent:'G'},
+  Y:{xL:260,yL:390,xP:110,yP:600,shape:'rect-h',code:'-.--',parent:'K'},
+  C:{xL:340,yL:390,xP:230,yP:700,shape:'circle',code:'-.-.',parent:'K'},
+  X:{xL:420,yL:390,xP:110,yP:850,shape:'rect-h',code:'-..-',parent:'D'},
+  B:{xL:500,yL:390,xP:350,yP:1000,shape:'circle',code:'-...',parent:'D'},
+  L:{xL:600,yL:390,xP:910,yP:600,shape:'circle',code:'.-..',parent:'R'},
+  J:{xL:680,yL:390,xP:670,yP:1000,shape:'rect-h',code:'.---',parent:'W'},
+  P:{xL:760,yL:390,xP:790,yP:850,shape:'circle',code:'.--.',parent:'W'},
+  H:{xL:840,yL:390,xP:1030,yP:230,shape:'led',code:'....',parent:'S'},
+  V:{xL:920,yL:390,xP:910,yP:330,shape:'rect-h',code:'...-',parent:'S'},
+  F:{xL:1000,yL:390,xP:790,yP:460,shape:'circle',code:'..-.',parent:'U'}
 };
 const MORSE_MAP={};
 for(const k in NODES) if(NODES[k].code) MORSE_MAP[k]=NODES[k].code;
+
+const VIEWBOX={landscape:'-20 20 1080 440',portrait:'0 0 1100 1200'};
+const SIZES={landscape:{r:12,w:36,h:12,rx:3},portrait:{r:16,w:52,h:16,rx:4}};
+let currentMode=window.matchMedia('(orientation: portrait)').matches?'portrait':'landscape';
 
 const $=id=>document.getElementById(id);
 const NS='http://www.w3.org/2000/svg';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const mkEl=(tag,attrs,txt)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;return e;};
+const getXY=(node,mode)=>({x:mode==='portrait'?node.xP:node.xL,y:mode==='portrait'?node.yP:node.yL});
 
 const finalTextEl=$('final-text'), currentCharEl=$('current-char'), morseDisplayEl=$('morse-display');
-const morseKey=$('morse-key'), antennaSymbol=$('antenna-symbol');
+const morseKey=$('morse-key');
+const boardSvg=$('board-svg');
 let inputPath='', finalText='', finalMorseText='';
 let inputTimer=null, pressStartTime=0;
 let audioCtx=null, currentVolume=0.5, currentTone=700;
@@ -179,18 +239,15 @@ function startKeyVibrate(){
   if(!vibroEnabled || !navigator.vibrate) return;
   stopKeyVibrate();
   navigator.vibrate(100);
-  keyVibrateTimer=setInterval(()=>navigator.vibrate(100), 200);
+  keyVibrateTimer=setInterval(()=>navigator.vibrate(100),200);
 }
 function stopKeyVibrate(){
-  if(keyVibrateTimer){clearInterval(keyVibrateTimer); keyVibrateTimer=null;}
+  if(keyVibrateTimer){clearInterval(keyVibrateTimer);keyVibrateTimer=null;}
   if(navigator.vibrate) navigator.vibrate(0);
 }
 
 /* ===================== TORCH ===================== */
-function setTorch(on){
-  if(!torchTrack) return;
-  torchTrack.applyConstraints({advanced:[{torch:on}]}).catch(()=>{});
-}
+function setTorch(on){if(!torchTrack)return;torchTrack.applyConstraints({advanced:[{torch:on}]}).catch(()=>{});}
 async function ensureTorch(){
   if(torchTrack) return true;
   if(torchIniting) return false;
@@ -200,42 +257,38 @@ async function ensureTorch(){
     const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
     const t=s.getVideoTracks()[0];
     const caps=t.getCapabilities?t.getCapabilities():{};
-    if(!caps.torch){s.getTracks().forEach(x=>x.stop()); return false;}
-    torchStream=s; torchTrack=t;
-    return true;
+    if(!caps.torch){s.getTracks().forEach(x=>x.stop());return false;}
+    torchStream=s;torchTrack=t;return true;
   }catch{return false;}
   finally{torchIniting=false;}
 }
 function releaseTorch(){
-  if(torchStream){torchStream.getTracks().forEach(t=>t.stop()); torchStream=null;}
-  torchTrack=null;
-  clearTimeout(flashTimer); flashTimer=null;
+  if(torchStream){torchStream.getTracks().forEach(t=>t.stop());torchStream=null;}
+  torchTrack=null;clearTimeout(flashTimer);flashTimer=null;
 }
 function triggerFlash(ms){
   if(!torchEnabled) return;
-  if(!torchTrack){ensureTorch(); return;}
+  if(!torchTrack){ensureTorch();return;}
   clearTimeout(flashTimer);
   setTorch(true);
-  flashTimer=setTimeout(()=>{setTorch(false); flashTimer=null;}, ms);
+  flashTimer=setTimeout(()=>{setTorch(false);flashTimer=null;},ms);
 }
 function torchOnHold(){
   if(!torchEnabled) return;
-  if(!torchTrack){ensureTorch().then(ok=>{if(ok) setTorch(true);}); return;}
-  clearTimeout(flashTimer); flashTimer=null;
-  setTorch(true);
+  if(!torchTrack){ensureTorch().then(ok=>{if(ok)setTorch(true);});return;}
+  clearTimeout(flashTimer);flashTimer=null;setTorch(true);
 }
 function torchOffHold(){
   if(!torchEnabled) return;
-  clearTimeout(flashTimer); flashTimer=null;
-  setTorch(false);
+  clearTimeout(flashTimer);flashTimer=null;setTorch(false);
 }
 
 /* ===================== LIGHTS ===================== */
-const resetLights=()=>document.querySelectorAll('.pad-shape, .pcb-trace').forEach(el=>el.classList.remove('active'));
+const resetLights=()=>document.querySelectorAll('.pad-shape.active, .pcb-trace.active').forEach(el=>el.classList.remove('active'));
 function highlightPath(char){
   let cur=char;
   while(cur&&cur!=='root'){
-    const n=NODES[cur]; if(!n?.parent) break;
+    const n=NODES[cur];if(!n?.parent)break;
     $(`node-${cur}`)?.classList.add('active');
     $(`trace-${n.parent}-${cur}`)?.classList.add('active');
     cur=n.parent;
@@ -257,8 +310,8 @@ function finalizeLetter(){
   clearTimeout(inputTimer);
   currentCharEl.classList.remove('finalizing');
   const char=Object.keys(MORSE_MAP).find(k=>MORSE_MAP[k]===inputPath);
-  finalText+=char||'?'; finalMorseText+=inputPath+' ';
-  inputPath=''; updateBoard();
+  finalText+=char||'?';finalMorseText+=inputPath+' ';
+  inputPath='';updateBoard();
 }
 function rebuildMorseText(){
   let s='';
@@ -270,87 +323,79 @@ function rebuildMorseText(){
 }
 
 /* ===================== AUDIO ===================== */
-function initAudio(){ if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended')audioCtx.resume(); }
-
+function initAudio(){if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();}
 function startContinuousTone(){
   initAudio();
-  continuousToneOsc=audioCtx.createOscillator(); continuousToneGain=audioCtx.createGain();
-  continuousToneOsc.type='sine'; continuousToneOsc.frequency.value=currentTone; continuousToneGain.gain.value=currentVolume;
-  continuousToneOsc.connect(continuousToneGain); continuousToneGain.connect(audioCtx.destination);
-  morseKey.classList.remove('blink-green'); morseKey.classList.add('blink-red');
-  antennaSymbol.classList.add('active'); continuousToneOsc.start();
-  startKeyVibrate();
-  torchOnHold();
+  continuousToneOsc=audioCtx.createOscillator();continuousToneGain=audioCtx.createGain();
+  continuousToneOsc.type='sine';continuousToneOsc.frequency.value=currentTone;continuousToneGain.gain.value=currentVolume;
+  continuousToneOsc.connect(continuousToneGain);continuousToneGain.connect(audioCtx.destination);
+  morseKey.classList.remove('blink-green');morseKey.classList.add('blink-red');
+  startKeyVibrate();torchOnHold();
+  continuousToneOsc.start();
 }
 function stopContinuousTone(){
   if(continuousToneOsc){
-    continuousToneOsc.stop(); continuousToneOsc.disconnect(); continuousToneGain.disconnect(); continuousToneOsc=null;
+    continuousToneOsc.stop();continuousToneOsc.disconnect();continuousToneGain.disconnect();continuousToneOsc=null;
   }
-  morseKey.classList.remove('blink-red','blink-green'); antennaSymbol.classList.remove('active');
-  stopKeyVibrate();
-  torchOffHold();
+  morseKey.classList.remove('blink-red','blink-green');
+  stopKeyVibrate();torchOffHold();
 }
 function playTone(ms,type='dot'){
   initAudio();
-  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-  o.type='sine'; o.frequency.value=currentTone; g.gain.value=currentVolume;
-  o.connect(g); g.connect(audioCtx.destination);
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type='sine';o.frequency.value=currentTone;g.gain.value=currentVolume;
+  o.connect(g);g.connect(audioCtx.destination);
   morseKey.classList.remove('blink-green','blink-red');
   morseKey.classList.add(type==='dot'?'blink-green':'blink-red');
-  antennaSymbol.classList.add('active');
   triggerFlash(ms);
   o.start();
-  setTimeout(()=>{o.stop();g.disconnect();morseKey.classList.remove('blink-green','blink-red');antennaSymbol.classList.remove('active');},ms);
+  setTimeout(()=>{o.stop();g.disconnect();morseKey.classList.remove('blink-green','blink-red');},ms);
 }
 async function playCode(code,unit=100){
-  if(vibroEnabled && navigator.vibrate){
+  if(vibroEnabled&&navigator.vibrate){
     const pattern=[];
     for(const ch of code){
-      if(ch==='.') pattern.push(unit, unit*2);
-      else if(ch==='-') pattern.push(unit*3, unit*2);
+      if(ch==='.')pattern.push(unit,unit*2);
+      else if(ch==='-')pattern.push(unit*3,unit*2);
     }
     navigator.vibrate(pattern);
   }
   for(const ch of code){
     if(abortPlayback) return;
-    if(ch==='.'){playTone(unit,'dot'); await sleep(unit*2);}
-    else if(ch==='-'){playTone(unit*3,'dash'); await sleep(unit*4);}
+    if(ch==='.'){playTone(unit,'dot');await sleep(unit*2);}
+    else if(ch==='-'){playTone(unit*3,'dash');await sleep(unit*4);}
   }
   await sleep(unit*2);
 }
 async function replayOnce(){
   if(!finalText||replayInProgress) return;
-  replayInProgress=true; abortPlayback=false;
+  replayInProgress=true;abortPlayback=false;
   try{
     for(const char of finalText.trim()){
       if(abortPlayback) break;
-      if(char===' '){await sleep(400); continue;}
-      const node=NODES[char]; if(!node) continue;
+      if(char===' '){await sleep(400);continue;}
+      const node=NODES[char];if(!node)continue;
       highlightPath(char);
       await playCode(node.code,100);
       resetLights();
     }
-  } finally{
-    replayInProgress=false;
-    resetLights();
-  }
+  }finally{replayInProgress=false;resetLights();}
 }
 
 /* ===================== KEY ===================== */
 function handlePressStart(e){
-  e.preventDefault(); clearTimeout(inputTimer); currentCharEl.classList.remove('finalizing');
-  morseKey.classList.add('active'); pressStartTime=performance.now(); startContinuousTone();
+  e.preventDefault();clearTimeout(inputTimer);currentCharEl.classList.remove('finalizing');
+  morseKey.classList.add('active');pressStartTime=performance.now();startContinuousTone();
 }
 function handlePressEnd(e){
   if(e) e.preventDefault();
   if(!pressStartTime) return;
-  morseKey.classList.remove('active'); stopContinuousTone();
-  const isDot=performance.now()-pressStartTime<200; pressStartTime=0;
-  inputPath+=isDot?'.':'-'; updateBoard();
+  morseKey.classList.remove('active');stopContinuousTone();
+  const isDot=performance.now()-pressStartTime<200;pressStartTime=0;
+  inputPath+=isDot?'.':'-';updateBoard();
   morseKey.classList.remove('blink-green','blink-red');
   morseKey.classList.add(isDot?'blink-green':'blink-red');
   setTimeout(()=>morseKey.classList.remove('blink-green','blink-red'),isDot?150:450);
-  currentCharEl.classList.remove('finalizing'); void currentCharEl.offsetWidth; currentCharEl.classList.add('finalizing');
   inputTimer=setTimeout(finalizeLetter,800);
 }
 morseKey.addEventListener('mousedown',handlePressStart);
@@ -362,39 +407,27 @@ morseKey.addEventListener('mouseleave',()=>pressStartTime&&handlePressEnd());
 
 /* ===================== SPACE ===================== */
 $('btn-space').addEventListener('click',()=>{
-  clearTimeout(inputTimer); finalizeLetter();
-  finalText+=' '; finalMorseText+='/ '; updateBoard();
+  clearTimeout(inputTimer);finalizeLetter();
+  finalText+=' ';finalMorseText+='/ ';updateBoard();
 });
 
 /* ===================== RESET ===================== */
-let resetTimer=null, resetLongFired=false;
+let resetTimer=null,resetLongFired=false;
 function handleResetStart(e){
-  e.preventDefault();
-  resetLongFired=false;
-  clearTimeout(resetTimer);
+  e.preventDefault();resetLongFired=false;clearTimeout(resetTimer);
   resetTimer=setTimeout(()=>{
     resetLongFired=true;
     clearTimeout(inputTimer);
-    inputPath=''; finalText=''; finalMorseText='';
-    currentCharEl.classList.remove('finalizing');
-    updateBoard();
-    vibrate(80);
+    inputPath='';finalText='';finalMorseText='';
+    updateBoard();vibrate(80);
   },500);
 }
 function handleResetEnd(e){
-  e.preventDefault();
-  clearTimeout(resetTimer); resetTimer=null;
+  e.preventDefault();clearTimeout(resetTimer);resetTimer=null;
   if(!resetLongFired){
     clearTimeout(inputTimer);
-    if(inputPath){
-      inputPath='';
-      currentCharEl.classList.remove('finalizing');
-      updateBoard();
-    } else if(finalText){
-      finalText=finalText.slice(0,-1);
-      rebuildMorseText();
-      updateBoard();
-    }
+    if(inputPath){inputPath='';updateBoard();}
+    else if(finalText){finalText=finalText.slice(0,-1);rebuildMorseText();updateBoard();}
   }
   resetLongFired=false;
 }
@@ -406,7 +439,7 @@ resetBtn.addEventListener('touchend',handleResetEnd);
 resetBtn.addEventListener('pointercancel',handleResetEnd);
 resetBtn.addEventListener('mouseleave',e=>{if(resetTimer)handleResetEnd(e);});
 
-/* ===================== ANTENNA ===================== */
+/* ===================== ANTENNA (обе ориентации) ===================== */
 async function runLoop(){
   while(looping){
     await replayOnce();
@@ -416,55 +449,57 @@ async function runLoop(){
 }
 function handleAntennaStart(e){
   e.preventDefault();
-  if(looping){looping=false; abortPlayback=true; return;}
-  antennaPressStart=performance.now();
-  willLoop=false;
+  if(looping){looping=false;abortPlayback=true;return;}
+  antennaPressStart=performance.now();willLoop=false;
   clearTimeout(antennaTimer);
-  antennaTimer=setTimeout(()=>{
-    willLoop=true;
-    vibrate(100);
-  },3000);
+  antennaTimer=setTimeout(()=>{willLoop=true;vibrate(100);},3000);
 }
 function handleAntennaEnd(e){
-  e.preventDefault();
-  clearTimeout(antennaTimer);
+  e.preventDefault();clearTimeout(antennaTimer);
   if(looping) return;
-  const wasLong=willLoop, wasShort=!!antennaPressStart;
-  willLoop=false; antennaPressStart=0;
-  if(wasLong){looping=true; runLoop();}
+  const wasLong=willLoop,wasShort=!!antennaPressStart;
+  willLoop=false;antennaPressStart=0;
+  if(wasLong){looping=true;runLoop();}
   else if(wasShort){replayOnce();}
 }
-antennaSymbol.addEventListener('mousedown',handleAntennaStart);
-antennaSymbol.addEventListener('mouseup',handleAntennaEnd);
-antennaSymbol.addEventListener('mouseleave',e=>{if(antennaPressStart)handleAntennaEnd(e);});
-antennaSymbol.addEventListener('touchstart',handleAntennaStart,{passive:false});
-antennaSymbol.addEventListener('touchend',handleAntennaEnd);
-antennaSymbol.addEventListener('pointercancel',handleAntennaEnd);
+document.querySelectorAll('.antenna-symbol').forEach(el=>{
+  el.addEventListener('mousedown',handleAntennaStart);
+  el.addEventListener('mouseup',handleAntennaEnd);
+  el.addEventListener('mouseleave',e=>{if(antennaPressStart)handleAntennaEnd(e);});
+  el.addEventListener('touchstart',handleAntennaStart,{passive:false});
+  el.addEventListener('touchend',handleAntennaEnd);
+  el.addEventListener('pointercancel',handleAntennaEnd);
+});
 
-/* ===================== DRAW ===================== */
-function drawTraces(){
-  const g=$('traces-group'); g.innerHTML='';
+/* ===================== DRAW (mode-aware) ===================== */
+function drawTraces(mode){
+  const g=$('traces-group');g.innerHTML='';
   for(const ch in NODES){
     if(ch==='root') continue;
-    const n=NODES[ch], p=NODES[n.parent]; if(!p) continue;
+    const n=NODES[ch],p=NODES[n.parent];if(!p) continue;
+    const np=getXY(n,mode),pp=getXY(p,mode);
     let d;
-    if(p.y===n.y||p.x===n.x) d=`M${p.x} ${p.y}L${n.x} ${n.y}`;
-    else{const my=p.y+(n.y-p.y)*0.5; d=`M${p.x} ${p.y}L${p.x} ${my}L${n.x} ${my}L${n.x} ${n.y}`;}
+    if(pp.y===np.y||pp.x===np.x) d=`M${pp.x} ${pp.y}L${np.x} ${np.y}`;
+    else{
+      const my=pp.y+(np.y-pp.y)*(n.parent==='root'?.35:.5);
+      d=`M${pp.x} ${pp.y}L${pp.x} ${my}L${np.x} ${my}L${np.x} ${np.y}`;
+    }
     g.appendChild(mkEl('path',{d,class:'pcb-trace',id:`trace-${n.parent}-${ch}`}));
   }
 }
-function drawComponents(){
-  const g=$('components-group'); g.innerHTML='';
+function drawComponents(mode){
+  const g=$('components-group');g.innerHTML='';
+  const S=SIZES[mode];
   for(const ch in NODES){
     if(ch==='root') continue;
-    const n=NODES[ch];
-    const grp=mkEl('g'); grp.style.cursor='pointer';
+    const n=NODES[ch],{x,y}=getXY(n,mode);
+    const grp=mkEl('g');grp.style.cursor='pointer';
     grp.addEventListener('click',async()=>{
-      clearTimeout(inputTimer); currentCharEl.classList.remove('finalizing'); resetLights();
-      const path=[]; let c=ch;
-      while(c!=='root'){path.unshift(c); c=NODES[c].parent;}
+      clearTimeout(inputTimer);resetLights();
+      const path=[];let c=ch;
+      while(c!=='root'){path.unshift(c);c=NODES[c].parent;}
       for(const step of path){
-        const s=NODES[step], sym=s.code.slice(-1);
+        const s=NODES[step],sym=s.code.slice(-1);
         const dur=sym==='.'?100:300;
         $(`node-${step}`)?.classList.add('active');
         $(`trace-${s.parent}-${step}`)?.classList.add('active');
@@ -472,27 +507,46 @@ function drawComponents(){
         playTone(dur,sym==='.'?'dot':'dash');
         await sleep(sym==='.'?200:400);
       }
-      await sleep(500); resetLights();
+      await sleep(500);resetLights();
     });
     const isCircle=n.shape==='led'||n.shape==='circle';
     const shape=isCircle
-      ? mkEl('circle',{cx:n.x,cy:n.y,r:12})
-      : mkEl('rect',{x:n.x-18,y:n.y-6,width:36,height:12,rx:3});
+      ? mkEl('circle',{cx:x,cy:y,r:S.r})
+      : mkEl('rect',{x:x-S.w/2,y:y-S.h/2,width:S.w,height:S.h,rx:S.rx});
     shape.setAttribute('class',`pad-shape ${isCircle?'circle-shape':'rect-shape'}`);
     shape.id=`node-${ch}`;
-    const ty=n.y===390?n.y+24:(isCircle?n.y-20:n.y-18);
-    grp.append(shape, mkEl('text',{x:n.x,y:ty,class:'pad-text',id:`text-${ch}`},ch));
+    // Позиция подписи
+    let ty;
+    if(mode==='portrait'){
+      ty = y>=700 ? y+32 : (isCircle ? y-28 : y-26);
+    } else {
+      ty = y===390 ? y+24 : (isCircle ? y-20 : y-18);
+    }
+    grp.append(shape, mkEl('text',{x,y:ty,class:'pad-text',id:`text-${ch}`},ch));
     g.appendChild(grp);
   }
+}
+
+function applyMode(mode){
+  currentMode=mode;
+  boardSvg.setAttribute('viewBox',VIEWBOX[mode]);
+  drawTraces(mode);
+  drawComponents(mode);
+  updateBoard();
+}
+function switchMode(newMode){
+  abortPlayback=true;
+  if(pressStartTime){morseKey.classList.remove('active');stopContinuousTone();pressStartTime=0;}
+  resetLights();
+  applyMode(newMode);
 }
 
 /* ===================== SETTINGS ===================== */
 const modal=$('settings-modal');
 $('settings-btn').addEventListener('click',()=>modal.classList.add('open'));
 $('close-modal').addEventListener('click',()=>modal.classList.remove('open'));
-$('tone').addEventListener('input',e=>{currentTone=+e.target.value; $('tone-val').textContent=currentTone+' Гц';});
+$('tone').addEventListener('input',e=>{currentTone=+e.target.value;$('tone-val').textContent=currentTone+' Гц';});
 $('vol').addEventListener('input',e=>{currentVolume=+e.target.value;});
-
 const setStatus=msg=>$('status').textContent=msg;
 
 $('vibro-toggle').checked=vibroEnabled;
@@ -506,114 +560,103 @@ $('torch-toggle').checked=torchEnabled;
 $('torch-toggle').addEventListener('change',async e=>{
   if(e.target.checked){
     const ok=await ensureTorch();
-    if(!ok){e.target.checked=false; setStatus('Фонарик недоступен на этом устройстве'); return;}
-    torchEnabled=true; storage.setItem('torch','1');
-    setTorch(true); setTimeout(()=>{if(!flashTimer) setTorch(false);},300);
+    if(!ok){e.target.checked=false;setStatus('Фонарик недоступен на этом устройстве');return;}
+    torchEnabled=true;storage.setItem('torch','1');
+    setTorch(true);setTimeout(()=>{if(!flashTimer)setTorch(false);},300);
   } else {
-    torchEnabled=false; storage.setItem('torch','0');
-    torchOffHold();
-    setTimeout(releaseTorch,150);
+    torchEnabled=false;storage.setItem('torch','0');
+    torchOffHold();setTimeout(releaseTorch,150);
   }
 });
 
 /* ===================== MICROPHONE (Beta) ===================== */
-let micStream=null, micActive=false, micAnalyser=null, micData=null;
-let micLastTone=false, micToneStart=0, micToneEnd=0;
-let micAnimId=null;
+let micStream=null,micActive=false,micAnalyser=null,micData=null;
+let micLastTone=false,micToneStart=0,micToneEnd=0,micAnimId=null;
 
 async function toggleMic(){
   initAudio();
   if(micActive){
-    if(micAnimId){cancelAnimationFrame(micAnimId); micAnimId=null;}
+    if(micAnimId){cancelAnimationFrame(micAnimId);micAnimId=null;}
     micStream?.getTracks().forEach(t=>t.stop());
-    micStream=null; micActive=false;
-    micLastTone=false; micToneStart=0; micToneEnd=0;
+    micStream=null;micActive=false;
+    micLastTone=false;micToneStart=0;micToneEnd=0;
     if(inputPath) finalizeLetter();
     morseKey.classList.remove('blink-red');
-    antennaSymbol.classList.remove('active');
-    setStatus('Микрофон выключен');
-    return;
+    setStatus('Микрофон выключен');return;
   }
   try{
     micStream=await navigator.mediaDevices.getUserMedia({audio:true});
-    micAnalyser=audioCtx.createAnalyser();
-    micAnalyser.fftSize=1024;
-    micAnalyser.smoothingTimeConstant=0.6;
+    micAnalyser=audioCtx.createAnalyser();micAnalyser.fftSize=1024;micAnalyser.smoothingTimeConstant=0.6;
     audioCtx.createMediaStreamSource(micStream).connect(micAnalyser);
     micData=new Uint8Array(micAnalyser.frequencyBinCount);
-    micActive=true; inputPath='';
-    micLastTone=false; micToneStart=0; micToneEnd=0;
+    micActive=true;inputPath='';micLastTone=false;micToneStart=0;micToneEnd=0;
     setStatus('Слушаю... (Beta)');
     micAnimId=requestAnimationFrame(processMic);
-  } catch {
-    setStatus('Ошибка микрофона (нет доступа)');
-  }
+  } catch { setStatus('Ошибка микрофона (нет доступа)'); }
 }
 function processMic(){
   if(!micActive) return;
   micAnalyser.getByteFrequencyData(micData);
   const binHz=audioCtx.sampleRate/micAnalyser.fftSize;
   let maxVal=0;
-  for(let i=Math.floor(400/binHz); i<Math.floor(1200/binHz)&&i<micData.length; i++)
+  for(let i=Math.floor(400/binHz);i<Math.floor(1200/binHz)&&i<micData.length;i++)
     if(micData[i]>maxVal) maxVal=micData[i];
-  const present=maxVal>80, now=performance.now();
-
-  if(present&&!micLastTone){
-    micToneStart=now;
-    morseKey.classList.add('blink-red');
-    antennaSymbol.classList.add('active');
-  } else if(!present&&micLastTone){
-    micToneEnd=now;
-    morseKey.classList.remove('blink-red');
-    antennaSymbol.classList.remove('active');
+  const present=maxVal>80,now=performance.now();
+  if(present&&!micLastTone){micToneStart=now;morseKey.classList.add('blink-red');}
+  else if(!present&&micLastTone){
+    micToneEnd=now;morseKey.classList.remove('blink-red');
     const dur=micToneEnd-micToneStart;
-    if(dur>50&&dur<500){ inputPath+=dur<200?'.':'-'; updateBoard(); }
+    if(dur>50&&dur<500){inputPath+=dur<200?'.':'-';updateBoard();}
   }
   micLastTone=present;
-
-  if(!present && inputPath && micToneEnd && now-micToneEnd>800){
-    finalizeLetter();
-    micToneEnd=0;
-  }
+  if(!present&&inputPath&&micToneEnd&&now-micToneEnd>800){finalizeLetter();micToneEnd=0;}
   micAnimId=requestAnimationFrame(processMic);
 }
 $('btn-mic').addEventListener('click',toggleMic);
 
-/* ===================== GLOBAL SAFETY ===================== */
+/* ===================== SAFETY ===================== */
 function safetyStop(){
-  if(pressStartTime){ morseKey.classList.remove('active'); stopContinuousTone(); pressStartTime=0; }
-  if(resetTimer){clearTimeout(resetTimer); resetTimer=null;}
-  if(antennaTimer){clearTimeout(antennaTimer); antennaTimer=null;}
-  if(micAnimId){cancelAnimationFrame(micAnimId); micAnimId=null;}
+  if(pressStartTime){morseKey.classList.remove('active');stopContinuousTone();pressStartTime=0;}
+  if(resetTimer){clearTimeout(resetTimer);resetTimer=null;}
+  if(antennaTimer){clearTimeout(antennaTimer);antennaTimer=null;}
+  if(micAnimId){cancelAnimationFrame(micAnimId);micAnimId=null;}
   if(micActive){
     micStream?.getTracks().forEach(t=>t.stop());
-    micStream=null; micActive=false;
-    micLastTone=false; micToneStart=0; micToneEnd=0;
+    micStream=null;micActive=false;
+    micLastTone=false;micToneStart=0;micToneEnd=0;
     morseKey.classList.remove('blink-red');
-    antennaSymbol.classList.remove('active');
   }
-  torchOffHold();
-  stopKeyVibrate();
-  looping=false; abortPlayback=true;
+  torchOffHold();stopKeyVibrate();looping=false;abortPlayback=true;
 }
 window.addEventListener('blur',safetyStop);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)safetyStop();});
 
+/* ===================== ORIENTATION WATCHER ===================== */
+let resizeTimer=null;
+function detectMode(){return window.matchMedia('(orientation: portrait)').matches?'portrait':'landscape';}
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(()=>{
+    const m=detectMode();
+    if(m!==currentMode) switchMode(m);
+  },150);
+});
+
 /* ===================== PWA ===================== */
 (function(){
-  const installBtn=$('install-btn'), iosHint=$('ios-hint');
+  const installBtn=$('install-btn'),iosHint=$('ios-hint');
   if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone) return;
   let deferredPrompt=null;
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault(); deferredPrompt=e; installBtn.classList.add('visible');});
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;installBtn.classList.add('visible');});
   installBtn.addEventListener('click',async()=>{
     if(!deferredPrompt) return;
     installBtn.classList.remove('visible');
-    deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null;
+    deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;
   });
-  window.addEventListener('appinstalled',()=>{installBtn.classList.remove('visible'); deferredPrompt=null;});
+  window.addEventListener('appinstalled',()=>{installBtn.classList.remove('visible');deferredPrompt=null;});
   const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
   if(isIOS&&!storage.getItem('iosHintShown')){
-    setTimeout(()=>{iosHint.classList.add('visible'); storage.setItem('iosHintShown','1');},2500);
+    setTimeout(()=>{iosHint.classList.add('visible');storage.setItem('iosHintShown','1');},2500);
     $('close-ios-hint').addEventListener('click',()=>iosHint.classList.remove('visible'));
   }
 })();
@@ -626,9 +669,7 @@ if('serviceWorker' in navigator){
 }
 
 /* ===================== INIT ===================== */
-drawTraces();
-drawComponents();
-updateBoard();
+applyMode(currentMode);
 </script>
 </body>
 </html>
