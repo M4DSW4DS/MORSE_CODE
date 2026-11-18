@@ -80,6 +80,7 @@ button.tool-btn-gold:active{border-bottom:2px solid #4a3810}
 .toggle-btn:disabled{opacity:.35;cursor:not-allowed}
 #status{font-size:.82rem;color:#7a828c;margin:24px auto 10px;text-align:center;max-width:500px;line-height:1.6}
 #status b{color:var(--gold)}
+#version-info{text-align:center;margin:24px auto 4px;font-size:.7rem;color:#4a5058;letter-spacing:1.2px;line-height:1.5;font-family:'Courier New',monospace}
 
 .pcb-bg{fill:var(--board-bg)}
 .pcb-dots{fill:#1c2228}
@@ -147,7 +148,7 @@ button.tool-btn-gold:active{border-bottom:2px solid #4a3810}
           <rect x="30" y="20" width="1020" height="440" class="pcb-bg"/>
           <pattern id="pcb-dots-L" x="30" y="20" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" class="pcb-dots"/></pattern>
           <rect x="30" y="20" width="1020" height="440" fill="url(#pcb-dots-L)"/>
-          <text x="140" y="60" class="board-title">MORSE</text>
+          <text x="110" y="60" class="board-title">MORSE</text>
           <text x="840" y="60" class="board-title">CODE</text>
           <rect class="antenna-hit" x="450" y="15" width="140" height="110"/>
           <path class="antenna" d="M 520 30 L 520 85 M 485 85 L 555 85 M 500 100 L 540 100 L 520 85 Z"/>
@@ -157,7 +158,7 @@ button.tool-btn-gold:active{border-bottom:2px solid #4a3810}
           <pattern id="pcb-dots-P" x="60" y="70" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" class="pcb-dots"/></pattern>
           <rect x="60" y="70" width="1000" height="1000" rx="30" fill="url(#pcb-dots-P)"/>
           <rect x="60" y="70" width="1000" height="1000" rx="30" fill="none" stroke="#3a2e12" stroke-width="8"/>
-          <text x="290" y="120" class="board-title">MORSE</text>
+          <text x="250" y="120" class="board-title">MORSE</text>
           <text x="730" y="120" class="board-title">CODE</text>
           <rect class="antenna-hit" x="430" y="55" width="160" height="170"/>
           <path class="antenna" d="M510 75V125M465 125H555M480 148H540L510 125Z"/>
@@ -207,7 +208,7 @@ button.tool-btn-gold:active{border-bottom:2px solid #4a3810}
         <button class="toggle-btn" id="vibro-toggle"><span class="dot-ind"></span>VIBRO<span class="state-txt">OFF</span></button>
       </div>
     </div>
-    <div class="tech-row">
+    <div class="tech-row" id="torch-row">
       <span class="tech-key">Torch</span>
       <div style="grid-column:span 2;display:flex;justify-content:flex-end">
         <button class="toggle-btn" id="torch-toggle"><span class="dot-ind"></span>TORCH<span class="state-txt">OFF</span></button>
@@ -228,18 +229,43 @@ button.tool-btn-gold:active{border-bottom:2px solid #4a3810}
     <b>SPACE</b>: завершить букву · <b>RESET</b>: тап — удалить, удержание — очистить<br>
     <b>Антенна</b>: 1 тап — повтор, 3 тапа — цикл, тап — стоп
   </div>
+  <div id="version-info">version 1.0<br>M4DSW4DS</div>
 </div>
 
 <div id="ios-hint"><span class="close-hint" id="close-ios-hint">✕</span>Установите приложение: нажмите <b>«Поделиться»</b> <br>и выберите <b>«На экран „Домой“»</b></div>
 
 <script>
-/* --- Safe storage --- */
+/* ============ SAFE STORAGE ============ */
 const storage=(()=>{
   try{const t='_t'+Math.random();localStorage.setItem(t,'1');localStorage.removeItem(t);return localStorage;}
   catch{const d={};return{getItem:k=>k in d?d[k]:null,setItem:(k,v)=>{d[k]=String(v);},removeItem:k=>{delete d[k];}};}
 })();
 
-/* ===================== NODES ===================== */
+/* ============ CONFIG ============ */
+const STATE_TTL=7*24*60*60*1000;
+const DOT_VALUES=[150,180,200,220,250,300,350,400];
+const canVibrate=typeof navigator.vibrate==='function';
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+const STORAGE_KEYS={state:'morse_state',settings:'morse_settings',vibro:'vibro',torch:'torch',twoKeys:'twoKeys'};
+
+/* ============ STATE (A2) ============ */
+const STATE={
+  inputPath:'',finalText:'',finalMorseText:'',
+  looping:false,replayInProgress:false,abortPlayback:false,
+  pressStart:0,antennaTapCount:0,
+  inputTimer:null,resetTimer:null,resetLongFired:false,antennaTimer:null,saveTimer:null,
+  torchStream:null,torchTrack:null,torchIniting:false,torchBusy:false,
+  torchTarget:false,torchState:false,torchFlashUntil:0,torchFlashTimer:null
+};
+
+const SETTINGS={
+  tone:700,volume:0.5,dotThreshold:200,
+  vibro:storage.getItem(STORAGE_KEYS.vibro)==='1',
+  torch:storage.getItem(STORAGE_KEYS.torch)==='1',
+  twoKeys:storage.getItem(STORAGE_KEYS.twoKeys)==='1'
+};
+
+/* ============ NODES ============ */
 const NODES={
   root:{xL:520,yL:110,xP:510,yP:140,shape:'none',code:'',parent:null},
   T:{xL:240,yL:150,xP:350,yP:230,shape:'rect-h',code:'-',parent:'root'},
@@ -276,116 +302,208 @@ const VIEWBOX={landscape:'30 20 1020 440',portrait:'60 70 1000 1000'};
 const SIZES={landscape:{r:12,w:36,h:12,rx:3},portrait:{r:22,w:72,h:22,rx:6}};
 let currentMode=window.matchMedia('(orientation: portrait)').matches?'portrait':'landscape';
 
+/* ============ HELPERS ============ */
 const $=id=>document.getElementById(id);
 const NS='http://www.w3.org/2000/svg';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const mkEl=(tag,attrs,txt)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;return e;};
 const getXY=(node,mode)=>({x:mode==='portrait'?node.xP:node.xL,y:mode==='portrait'?node.yP:node.yL});
 
-const finalTextEl=$('final-text'), currentCharEl=$('current-char'), morseDisplayEl=$('morse-display');
-const morseKey=$('morse-key'), dashKey=$('dash-key');
-const boardSvg=$('board-svg'), controlsRight=$('controls-right');
-let inputPath='', finalText='', finalMorseText='';
-let inputTimer=null, pressStartTime=0;
-let audioCtx=null, currentVolume=0.5, currentTone=700;
-let continuousToneOsc=null, continuousToneGain=null;
-let vibroEnabled=storage.getItem('vibro')==='1';
-let torchEnabled=storage.getItem('torch')==='1';
-let twoKeyMode=storage.getItem('twoKeys')==='1';
-let torchStream=null, torchTrack=null, torchIniting=false, flashTimer=null;
-let torchTarget=false, torchState=false, torchBusy=false;
-let looping=false, antennaTimer=null, antennaTapCount=0;
-let abortPlayback=false, replayInProgress=false;
-let dotThreshold=200;
-const DOT_VALUES=[150,180,200,220,250,300,350,400];
-const canVibrate=typeof navigator.vibrate==='function';
+/* ============ DOM REFS ============ */
+const finalTextEl=$('final-text'),currentCharEl=$('current-char'),morseDisplayEl=$('morse-display');
+const morseKey=$('morse-key'),dashKey=$('dash-key');
+const boardSvg=$('board-svg'),controlsRight=$('controls-right');
 
-/* ===================== PERSISTENCE ===================== */
-const STATE_KEY='morse_state', SETTINGS_KEY='morse_settings';
-const STATE_TTL=7*24*60*60*1000;
+/* ============ AUDIO INIT ============ */
+let audioCtx=null;
+function initAudio(){if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();}
+
+/* ============ PLAYER (A1) ============ */
+const Player={
+  _osc:null,_gain:null,_keyVibroTimer:null,
+
+  startContinuous(){
+    initAudio();
+    this._osc=audioCtx.createOscillator();
+    this._gain=audioCtx.createGain();
+    this._osc.type='sine';
+    this._osc.frequency.value=SETTINGS.tone;
+    this._gain.gain.value=SETTINGS.volume;
+    this._osc.connect(this._gain);
+    this._gain.connect(audioCtx.destination);
+    this._osc.start();
+    morseKey.classList.remove('blink-green');
+    morseKey.classList.add('blink-red');
+    this._startKeyVibro();
+    torchOnHold();
+  },
+
+  stopContinuous(){
+    if(this._osc){
+      try{this._osc.stop();}catch{}
+      try{this._osc.disconnect();}catch{}
+      try{this._gain.disconnect();}catch{}
+      this._osc=null;this._gain=null;
+    }
+    morseKey.classList.remove('blink-red','blink-green');
+    this._stopKeyVibro();
+    torchOffHold();
+  },
+
+  playTone(ms,type='dot'){
+    initAudio();
+    const o=audioCtx.createOscillator();
+    const g=audioCtx.createGain();
+    o.type='sine';
+    o.frequency.value=SETTINGS.tone;
+    g.gain.value=SETTINGS.volume;
+    o.connect(g);g.connect(audioCtx.destination);
+    morseKey.classList.remove('blink-green','blink-red');
+    morseKey.classList.add(type==='dot'?'blink-green':'blink-red');
+    triggerFlash(ms);
+    o.start();
+    setTimeout(()=>{
+      try{o.stop();}catch{}
+      try{g.disconnect();}catch{}
+      morseKey.classList.remove('blink-green','blink-red');
+    },ms);
+  },
+
+  vibrate(pattern){if(SETTINGS.vibro) navigator.vibrate?.(pattern);},
+
+  _startKeyVibro(){
+    if(!SETTINGS.vibro||!navigator.vibrate) return;
+    this._stopKeyVibro();
+    navigator.vibrate(100);
+    this._keyVibroTimer=setInterval(()=>navigator.vibrate(100),200);
+  },
+
+  _stopKeyVibro(){
+    if(this._keyVibroTimer){clearInterval(this._keyVibroTimer);this._keyVibroTimer=null;}
+    if(navigator.vibrate) navigator.vibrate(0);
+  },
+
+  stop(){this.stopContinuous();STATE.abortPlayback=true;}
+};
+
+const vibrate=p=>Player.vibrate(p);
+const stopKeyVibrate=()=>Player._stopKeyVibro();
+
+/* ============ PERSISTENCE ============ */
 let stateLoaded=false;
-function saveState(){if(!stateLoaded) return;try{storage.setItem(STATE_KEY,JSON.stringify({finalText,finalMorseText,ts:Date.now()}));}catch{}}
+
+function scheduleSaveState(){
+  if(!stateLoaded) return;
+  if(STATE.saveTimer) return;
+  STATE.saveTimer=setTimeout(()=>{STATE.saveTimer=null;saveState();},500);
+}
+function flushSaveState(){
+  if(STATE.saveTimer){clearTimeout(STATE.saveTimer);STATE.saveTimer=null;}
+  saveState();
+}
+function saveState(){
+  if(!stateLoaded) return;
+  try{storage.setItem(STORAGE_KEYS.state,JSON.stringify({finalText:STATE.finalText,finalMorseText:STATE.finalMorseText,ts:Date.now()}));}catch{}
+}
 function loadState(){
   try{
-    const raw=storage.getItem(STATE_KEY);if(!raw)return;
+    const raw=storage.getItem(STORAGE_KEYS.state);if(!raw)return;
     const s=JSON.parse(raw);
-    if(Date.now()-(s.ts||0)>STATE_TTL){storage.removeItem(STATE_KEY);return;}
-    finalText=s.finalText||'';finalMorseText=s.finalMorseText||'';
+    if(Date.now()-(s.ts||0)>STATE_TTL){storage.removeItem(STORAGE_KEYS.state);return;}
+    STATE.finalText=s.finalText||'';
+    STATE.finalMorseText=s.finalMorseText||'';
   }catch{}
 }
-function saveSettings(){try{storage.setItem(SETTINGS_KEY,JSON.stringify({tone:currentTone,vol:currentVolume,dot:dotThreshold}));}catch{}}
+function saveSettings(){
+  try{storage.setItem(STORAGE_KEYS.settings,JSON.stringify({tone:SETTINGS.tone,vol:SETTINGS.volume,dot:SETTINGS.dotThreshold}));}catch{}
+}
 function loadSettings(){
   try{
-    const s=JSON.parse(storage.getItem(SETTINGS_KEY)||'{}');
-    if(typeof s.tone==='number') currentTone=s.tone;
-    if(typeof s.vol==='number') currentVolume=s.vol;
-    if(typeof s.dot==='number' && DOT_VALUES.includes(s.dot)) dotThreshold=s.dot;
+    const s=JSON.parse(storage.getItem(STORAGE_KEYS.settings)||'{}');
+    if(typeof s.tone==='number') SETTINGS.tone=s.tone;
+    if(typeof s.vol==='number') SETTINGS.volume=s.vol;
+    if(typeof s.dot==='number'&&DOT_VALUES.includes(s.dot)) SETTINGS.dotThreshold=s.dot;
   }catch{}
 }
 
-/* ===================== VIBRO ===================== */
-const vibrate=p=>{if(vibroEnabled) navigator.vibrate?.(p);};
-let keyVibrateTimer=null;
-function startKeyVibrate(){
-  if(!vibroEnabled || !navigator.vibrate) return;
-  stopKeyVibrate();navigator.vibrate(100);
-  keyVibrateTimer=setInterval(()=>navigator.vibrate(100),200);
-}
-function stopKeyVibrate(){
-  if(keyVibrateTimer){clearInterval(keyVibrateTimer);keyVibrateTimer=null;}
-  if(navigator.vibrate) navigator.vibrate(0);
+/* ============ TORCH ============ */
+function setTorch(on){STATE.torchTarget=on;applyTorchLoop();}
+
+async function applyTorchLoop(){
+  if(STATE.torchBusy||!STATE.torchTrack) return;
+  STATE.torchBusy=true;
+  try{
+    while(STATE.torchTrack&&STATE.torchTarget!==STATE.torchState){
+      const want=STATE.torchTarget;
+      try{
+        await Promise.race([
+          STATE.torchTrack.applyConstraints({advanced:[{torch:want}]}),
+          new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),500))
+        ]);
+        STATE.torchState=want;
+      }catch{break;}
+    }
+  }finally{STATE.torchBusy=false;}
 }
 
-/* ===================== TORCH (latest-wins) ===================== */
-async function applyTorchLoop(){
-  if(torchBusy || !torchTrack) return;
-  torchBusy=true;
-  while(torchTrack && torchTarget!==torchState){
-    const want=torchTarget;
-    try{await torchTrack.applyConstraints({advanced:[{torch:want}]});torchState=want;}
-    catch{break;}
-  }
-  torchBusy=false;
-}
-function setTorch(on){torchTarget=on;applyTorchLoop();}
 async function ensureTorch(){
-  if(torchTrack) return true;
-  if(torchIniting) return false;
+  if(STATE.torchTrack) return true;
+  if(STATE.torchIniting) return false;
   if(!navigator.mediaDevices?.getUserMedia) return false;
-  torchIniting=true;
+  STATE.torchIniting=true;
   try{
-    const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    const s=await Promise.race([
+      navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))
+    ]);
     const t=s.getVideoTracks()[0];
     const caps=t.getCapabilities?t.getCapabilities():{};
     if(!caps.torch){s.getTracks().forEach(x=>x.stop());return false;}
-    torchStream=s;torchTrack=t;torchTarget=false;torchState=false;
+    STATE.torchStream=s;STATE.torchTrack=t;
+    STATE.torchTarget=false;STATE.torchState=false;
     return true;
   }catch{return false;}
-  finally{torchIniting=false;}
-}
-function releaseTorch(){
-  if(torchStream){torchStream.getTracks().forEach(t=>t.stop());torchStream=null;}
-  torchTrack=null;torchTarget=false;torchState=false;
-  clearTimeout(flashTimer);flashTimer=null;
-}
-function triggerFlash(ms){
-  if(!torchEnabled) return;
-  if(!torchTrack){ensureTorch();return;}
-  clearTimeout(flashTimer);
-  setTorch(true);
-  flashTimer=setTimeout(()=>{setTorch(false);flashTimer=null;},ms+20);
-}
-function torchOnHold(){
-  if(!torchEnabled) return;
-  if(!torchTrack){ensureTorch().then(ok=>{if(ok)torchOnHold();});return;}
-  clearTimeout(flashTimer);flashTimer=null;setTorch(true);
-}
-function torchOffHold(){
-  if(!torchEnabled) return;
-  clearTimeout(flashTimer);flashTimer=null;setTorch(false);
+  finally{STATE.torchIniting=false;}
 }
 
-/* ===================== LIGHTS ===================== */
+function releaseTorch(){
+  if(STATE.torchStream){STATE.torchStream.getTracks().forEach(t=>t.stop());STATE.torchStream=null;}
+  STATE.torchTrack=null;STATE.torchTarget=false;STATE.torchState=false;
+  if(STATE.torchFlashTimer){clearTimeout(STATE.torchFlashTimer);STATE.torchFlashTimer=null;}
+  STATE.torchFlashUntil=0;
+}
+
+function triggerFlash(ms){
+  if(!SETTINGS.torch) return;
+  if(!STATE.torchTrack){ensureTorch().then(ok=>{if(ok) triggerFlash(ms);});return;}
+  const now=performance.now();
+  const newUntil=now+Math.max(ms,60);
+  if(newUntil<=STATE.torchFlashUntil) return;
+  STATE.torchFlashUntil=newUntil;
+  if(STATE.torchFlashTimer) clearTimeout(STATE.torchFlashTimer);
+  setTorch(true);
+  STATE.torchFlashTimer=setTimeout(()=>{
+    setTorch(false);
+    STATE.torchFlashTimer=null;
+    STATE.torchFlashUntil=0;
+  },STATE.torchFlashUntil-now);
+}
+
+function torchOnHold(){
+  if(!SETTINGS.torch) return;
+  if(!STATE.torchTrack){ensureTorch().then(ok=>{if(ok)torchOnHold();});return;}
+  if(STATE.torchFlashTimer){clearTimeout(STATE.torchFlashTimer);STATE.torchFlashTimer=null;}
+  STATE.torchFlashUntil=0;
+  setTorch(true);
+}
+function torchOffHold(){
+  if(!SETTINGS.torch) return;
+  if(STATE.torchFlashTimer){clearTimeout(STATE.torchFlashTimer);STATE.torchFlashTimer=null;}
+  STATE.torchFlashUntil=0;
+  setTorch(false);
+}
+
+/* ============ LIGHTS ============ */
 const resetLights=()=>document.querySelectorAll('.pad-shape.active, .pcb-trace.active').forEach(el=>el.classList.remove('active'));
 function highlightPath(char){
   let cur=char;
@@ -400,86 +518,79 @@ function setAntennaInputting(on){
   document.querySelectorAll('.antenna').forEach(el=>el.classList.toggle('inputting',on));
 }
 
-/* ===================== FINAL TEXT RENDER ===================== */
+/* ============ FINAL TEXT — incremental (B1) ============ */
+let _spanCache=[];
+let _cachedText='__INIT__';
+let _lastPlayingIdx=-1;
+
 function renderFinalText(playingIdx){
-  if(!finalText){finalTextEl.textContent='';return;}
-  finalTextEl.innerHTML='';
-  for(let i=0;i<finalText.length;i++){
-    const c=finalText[i];
-    const span=document.createElement('span');
-    span.textContent=c===' '?'\u00A0':c;
-    if(i===playingIdx) span.className='playing';
-    finalTextEl.appendChild(span);
+  if(STATE.finalText!==_cachedText){
+    _cachedText=STATE.finalText;
+    finalTextEl.innerHTML='';
+    _spanCache=[];
+    for(let i=0;i<STATE.finalText.length;i++){
+      const span=document.createElement('span');
+      span.textContent=STATE.finalText[i]===' '?'\u00A0':STATE.finalText[i];
+      finalTextEl.appendChild(span);
+      _spanCache.push(span);
+    }
+    if(STATE.finalText) finalTextEl.appendChild(document.createTextNode(' '));
+    _lastPlayingIdx=-1;
   }
-  finalTextEl.appendChild(document.createTextNode(' '));
+  if(_lastPlayingIdx>=0&&_spanCache[_lastPlayingIdx]) _spanCache[_lastPlayingIdx].classList.remove('playing');
+  if(playingIdx>=0&&_spanCache[playingIdx]) _spanCache[playingIdx].classList.add('playing');
+  _lastPlayingIdx=playingIdx;
 }
 
-/* ===================== BOARD STATE ===================== */
+/* ============ BOARD STATE ============ */
 function updateBoard(){
   resetLights();
   renderFinalText(-1);
-  setAntennaInputting(!!inputPath);
-  if(!inputPath){currentCharEl.textContent='';morseDisplayEl.textContent=finalMorseText.trim();saveState();return;}
-  morseDisplayEl.textContent=(finalMorseText+' '+inputPath.split('').join(' ')).trim();
-  const char=Object.keys(MORSE_MAP).find(k=>MORSE_MAP[k]===inputPath);
+  setAntennaInputting(!!STATE.inputPath);
+  if(!STATE.inputPath){
+    currentCharEl.textContent='';
+    morseDisplayEl.textContent=STATE.finalMorseText.trim();
+    scheduleSaveState();
+    return;
+  }
+  morseDisplayEl.textContent=(STATE.finalMorseText+' '+STATE.inputPath.split('').join(' ')).trim();
+  const char=Object.keys(MORSE_MAP).find(k=>MORSE_MAP[k]===STATE.inputPath);
   currentCharEl.textContent=char||'?';
   if(char) highlightPath(char);
-  saveState();
+  scheduleSaveState();
 }
 function finalizeLetter(){
-  if(!inputPath) return;
-  clearTimeout(inputTimer);
+  if(!STATE.inputPath) return;
+  clearTimeout(STATE.inputTimer);
   currentCharEl.classList.remove('finalizing');
-  const char=Object.keys(MORSE_MAP).find(k=>MORSE_MAP[k]===inputPath);
-  finalText+=char||'?';finalMorseText+=inputPath+' ';
-  inputPath='';updateBoard();
+  const char=Object.keys(MORSE_MAP).find(k=>MORSE_MAP[k]===STATE.inputPath);
+  STATE.finalText+=char||'?';
+  STATE.finalMorseText+=STATE.inputPath+' ';
+  STATE.inputPath='';
+  updateBoard();
+  flushSaveState();
 }
 function rebuildMorseText(){
   let s='';
-  for(const c of finalText){
+  for(const c of STATE.finalText){
     if(c===' ') s+='/ ';
     else if(MORSE_MAP[c]) s+=MORSE_MAP[c]+' ';
   }
-  finalMorseText=s;
+  STATE.finalMorseText=s;
 }
 function appendSymbol(sym){
-  inputPath+=sym;updateBoard();
-  clearTimeout(inputTimer);
-  currentCharEl.classList.remove('finalizing');void currentCharEl.offsetWidth;currentCharEl.classList.add('finalizing');
-  inputTimer=setTimeout(finalizeLetter,800);
+  STATE.inputPath+=sym;
+  updateBoard();
+  clearTimeout(STATE.inputTimer);
+  currentCharEl.classList.remove('finalizing');
+  void currentCharEl.offsetWidth;
+  currentCharEl.classList.add('finalizing');
+  STATE.inputTimer=setTimeout(finalizeLetter,800);
 }
 
-/* ===================== AUDIO ===================== */
-function initAudio(){if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();}
-function startContinuousTone(){
-  initAudio();
-  continuousToneOsc=audioCtx.createOscillator();continuousToneGain=audioCtx.createGain();
-  continuousToneOsc.type='sine';continuousToneOsc.frequency.value=currentTone;continuousToneGain.gain.value=currentVolume;
-  continuousToneOsc.connect(continuousToneGain);continuousToneGain.connect(audioCtx.destination);
-  morseKey.classList.remove('blink-green');morseKey.classList.add('blink-red');
-  startKeyVibrate();torchOnHold();
-  continuousToneOsc.start();
-}
-function stopContinuousTone(){
-  if(continuousToneOsc){
-    continuousToneOsc.stop();continuousToneOsc.disconnect();continuousToneGain.disconnect();continuousToneOsc=null;
-  }
-  morseKey.classList.remove('blink-red','blink-green');
-  stopKeyVibrate();torchOffHold();
-}
-function playTone(ms,type='dot'){
-  initAudio();
-  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-  o.type='sine';o.frequency.value=currentTone;g.gain.value=currentVolume;
-  o.connect(g);g.connect(audioCtx.destination);
-  morseKey.classList.remove('blink-green','blink-red');
-  morseKey.classList.add(type==='dot'?'blink-green':'blink-red');
-  triggerFlash(ms);
-  o.start();
-  setTimeout(()=>{o.stop();g.disconnect();morseKey.classList.remove('blink-green','blink-red');},ms);
-}
+/* ============ PLAY CODE ============ */
 async function playCode(code,unit=100){
-  if(vibroEnabled&&navigator.vibrate){
+  if(SETTINGS.vibro&&navigator.vibrate){
     const pattern=[];
     for(const ch of code){
       if(ch==='.')pattern.push(unit,unit*2);
@@ -488,23 +599,23 @@ async function playCode(code,unit=100){
     navigator.vibrate(pattern);
   }
   for(const ch of code){
-    if(abortPlayback) return;
-    if(ch==='.'){playTone(unit,'dot');await sleep(unit*2);}
-    else if(ch==='-'){playTone(unit*3,'dash');await sleep(unit*4);}
+    if(STATE.abortPlayback) return;
+    if(ch==='.'){Player.playTone(unit,'dot');await sleep(unit*2);}
+    else if(ch==='-'){Player.playTone(unit*3,'dash');await sleep(unit*4);}
   }
   await sleep(unit*2);
 }
 
-/* ===================== REPLAY (без буквы в шапке) ===================== */
+/* ============ REPLAY ============ */
 async function replayOnce(){
-  if(!finalText) return;
-  if(replayInProgress){abortPlayback=true;return;}
-  replayInProgress=true;abortPlayback=false;
+  if(!STATE.finalText) return;
+  if(STATE.replayInProgress){STATE.abortPlayback=true;return;}
+  STATE.replayInProgress=true;STATE.abortPlayback=false;
   currentCharEl.textContent='';
   try{
-    for(let i=0;i<finalText.length;i++){
-      if(abortPlayback) break;
-      const char=finalText[i];
+    for(let i=0;i<STATE.finalText.length;i++){
+      if(STATE.abortPlayback) break;
+      const char=STATE.finalText[i];
       if(char===' '){await sleep(400);continue;}
       const node=NODES[char];
       if(!node) continue;
@@ -512,47 +623,52 @@ async function replayOnce(){
       highlightPath(char);
       await playCode(node.code,100);
       resetLights();
-      if(!abortPlayback) await sleep(100);
+      if(!STATE.abortPlayback) await sleep(100);
     }
   }finally{
-    replayInProgress=false;
+    STATE.replayInProgress=false;
     renderFinalText(-1);
     resetLights();
   }
 }
 
-/* ===================== KEY (duration) ===================== */
+/* ============ KEY (duration) ============ */
 function handlePressStart(e){
   if(e.pointerType==='mouse'&&e.button!==0) return;
   e.preventDefault();
-  abortPlayback=true;
-  clearTimeout(inputTimer);currentCharEl.classList.remove('finalizing');
-  morseKey.classList.add('active');pressStartTime=performance.now();startContinuousTone();
+  STATE.abortPlayback=true;
+  clearTimeout(STATE.inputTimer);
+  currentCharEl.classList.remove('finalizing');
+  morseKey.classList.add('active');
+  STATE.pressStart=performance.now();
+  Player.startContinuous();
 }
 function handlePressEnd(e){
   if(e) e.preventDefault();
-  if(!pressStartTime) return;
-  morseKey.classList.remove('active');stopContinuousTone();
-  const isDot=performance.now()-pressStartTime<dotThreshold;pressStartTime=0;
+  if(!STATE.pressStart) return;
+  morseKey.classList.remove('active');
+  Player.stopContinuous();
+  const isDot=performance.now()-STATE.pressStart<SETTINGS.dotThreshold;
+  STATE.pressStart=0;
   appendSymbol(isDot?'.':'-');
   morseKey.classList.remove('blink-green','blink-red');
   morseKey.classList.add(isDot?'blink-green':'blink-red');
   setTimeout(()=>morseKey.classList.remove('blink-green','blink-red'),isDot?150:450);
 }
 morseKey.addEventListener('pointerdown',e=>{
-  if(twoKeyMode){
+  if(SETTINGS.twoKeys){
     if(e.pointerType==='mouse'&&e.button!==0) return;
     e.preventDefault();
     morseKey.setPointerCapture?.(e.pointerId);
     morseKey.classList.add('active');
-    playTone(100,'dot');
+    Player.playTone(100,'dot');
   } else {
     morseKey.setPointerCapture?.(e.pointerId);
     handlePressStart(e);
   }
 });
 morseKey.addEventListener('pointerup',e=>{
-  if(twoKeyMode){
+  if(SETTINGS.twoKeys){
     e.preventDefault();
     morseKey.classList.remove('active');
     appendSymbol('.');
@@ -561,80 +677,95 @@ morseKey.addEventListener('pointerup',e=>{
   }
 });
 morseKey.addEventListener('pointercancel',e=>{
-  if(twoKeyMode){morseKey.classList.remove('active');}
+  if(SETTINGS.twoKeys){morseKey.classList.remove('active');}
   else{handlePressEnd(e);}
 });
 morseKey.addEventListener('pointerleave',e=>{
-  if(!twoKeyMode && e.pointerType==='mouse' && pressStartTime) handlePressEnd(e);
+  if(!SETTINGS.twoKeys&&e.pointerType==='mouse'&&STATE.pressStart) handlePressEnd(e);
 });
 
-/* ===================== DASH KEY ===================== */
+/* ============ DASH KEY ============ */
 dashKey.addEventListener('pointerdown',e=>{
-  if(!twoKeyMode) return;
+  if(!SETTINGS.twoKeys) return;
   if(e.pointerType==='mouse'&&e.button!==0) return;
   e.preventDefault();
   dashKey.setPointerCapture?.(e.pointerId);
   dashKey.classList.add('active');
-  playTone(300,'dash');
+  Player.playTone(300,'dash');
 });
 dashKey.addEventListener('pointerup',e=>{
-  if(!twoKeyMode) return;
+  if(!SETTINGS.twoKeys) return;
   e.preventDefault();
   dashKey.classList.remove('active');
   appendSymbol('-');
 });
 dashKey.addEventListener('pointercancel',e=>{
-  if(!twoKeyMode) return;
+  if(!SETTINGS.twoKeys) return;
   dashKey.classList.remove('active');
 });
 
-/* ===================== SPACE / RESET ===================== */
-function addSpace(){clearTimeout(inputTimer);finalizeLetter();finalText+=' ';finalMorseText+='/ ';updateBoard();}
-function resetAll(){clearTimeout(inputTimer);inputPath='';finalText='';finalMorseText='';updateBoard();vibrate(80);}
+/* ============ SPACE / RESET ============ */
+function addSpace(){
+  clearTimeout(STATE.inputTimer);
+  finalizeLetter();
+  STATE.finalText+=' ';
+  STATE.finalMorseText+='/ ';
+  updateBoard();
+  flushSaveState();
+}
+function resetAll(){
+  clearTimeout(STATE.inputTimer);
+  STATE.inputPath='';STATE.finalText='';STATE.finalMorseText='';
+  updateBoard();
+  vibrate(80);
+  flushSaveState();
+}
 $('btn-space').addEventListener('click',addSpace);
 
-let resetTimer=null,resetLongFired=false;
 function handleResetStart(e){
   if(e.pointerType==='mouse'&&e.button!==0) return;
-  e.preventDefault();resetLongFired=false;clearTimeout(resetTimer);
-  resetTimer=setTimeout(()=>{resetLongFired=true;resetAll();},500);
+  e.preventDefault();
+  STATE.resetLongFired=false;
+  clearTimeout(STATE.resetTimer);
+  STATE.resetTimer=setTimeout(()=>{STATE.resetLongFired=true;resetAll();},500);
 }
 function handleResetEnd(e){
-  e.preventDefault();clearTimeout(resetTimer);resetTimer=null;
-  if(!resetLongFired){
-    clearTimeout(inputTimer);
-    if(inputPath){inputPath='';updateBoard();}
-    else if(finalText){finalText=finalText.slice(0,-1);rebuildMorseText();updateBoard();}
+  e.preventDefault();
+  clearTimeout(STATE.resetTimer);STATE.resetTimer=null;
+  if(!STATE.resetLongFired){
+    clearTimeout(STATE.inputTimer);
+    if(STATE.inputPath){STATE.inputPath='';updateBoard();flushSaveState();}
+    else if(STATE.finalText){STATE.finalText=STATE.finalText.slice(0,-1);rebuildMorseText();updateBoard();flushSaveState();}
   }
-  resetLongFired=false;
+  STATE.resetLongFired=false;
 }
 const resetBtn=$('btn-reset');
 resetBtn.addEventListener('pointerdown',e=>{resetBtn.setPointerCapture?.(e.pointerId);handleResetStart(e);});
 resetBtn.addEventListener('pointerup',handleResetEnd);
 resetBtn.addEventListener('pointercancel',handleResetEnd);
-resetBtn.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&resetTimer)handleResetEnd(e);});
+resetBtn.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&STATE.resetTimer)handleResetEnd(e);});
 
-/* ===================== ANTENNA (1/3 tap) ===================== */
+/* ============ ANTENNA ============ */
 async function runLoop(){
-  while(looping){
+  while(STATE.looping){
     await replayOnce();
-    if(!looping) break;
+    if(!STATE.looping) break;
     await sleep(1000);
   }
 }
 function onAntennaTap(){
-  antennaTapCount++;
-  clearTimeout(antennaTimer);
+  STATE.antennaTapCount++;
+  clearTimeout(STATE.antennaTimer);
   document.querySelectorAll('.antenna').forEach(el=>{el.classList.add('active');setTimeout(()=>el.classList.remove('active'),80);});
-  antennaTimer=setTimeout(()=>{
-    const count=antennaTapCount;
-    antennaTapCount=0;
+  STATE.antennaTimer=setTimeout(()=>{
+    const count=STATE.antennaTapCount;
+    STATE.antennaTapCount=0;
     if(count>=3){
-      if(looping){looping=false;abortPlayback=true;}
-      else{looping=true;runLoop();}
+      if(STATE.looping){STATE.looping=false;STATE.abortPlayback=true;}
+      else{STATE.looping=true;runLoop();}
     } else if(count===1){
-      if(looping){looping=false;abortPlayback=true;}
-      else if(replayInProgress){abortPlayback=true;}
+      if(STATE.looping){STATE.looping=false;STATE.abortPlayback=true;}
+      else if(STATE.replayInProgress){STATE.abortPlayback=true;}
       else{replayOnce();}
     }
   },700);
@@ -643,21 +774,28 @@ document.querySelectorAll('.antenna-hit').forEach(el=>{
   el.addEventListener('click',onAntennaTap);
 });
 
-/* ===================== KEYBOARD ===================== */
+/* ============ KEYBOARD ============ */
 function kbKeyDown(e){
   if(modal.classList.contains('open')) return;
-  if(e.code==='Space'&&!e.repeat){e.preventDefault();
-    if(!pressStartTime){abortPlayback=true;clearTimeout(inputTimer);currentCharEl.classList.remove('finalizing');
-      morseKey.classList.add('active');pressStartTime=performance.now();startContinuousTone();}
+  if(e.code==='Space'&&!e.repeat){
+    e.preventDefault();
+    if(!STATE.pressStart){
+      STATE.abortPlayback=true;
+      clearTimeout(STATE.inputTimer);
+      currentCharEl.classList.remove('finalizing');
+      morseKey.classList.add('active');
+      STATE.pressStart=performance.now();
+      Player.startContinuous();
+    }
   }
   else if(e.code==='Enter'){e.preventDefault();addSpace();}
   else if(e.code==='Escape'){e.preventDefault();resetAll();}
 }
 function kbKeyUp(e){
-  if(e.code==='Space'&&pressStartTime){e.preventDefault();handlePressEnd();}
+  if(e.code==='Space'&&STATE.pressStart){e.preventDefault();handlePressEnd();}
 }
 
-/* ===================== DRAW ===================== */
+/* ============ DRAW ============ */
 function drawTraces(mode){
   const g=$('traces-group');g.innerHTML='';
   for(const ch in NODES){
@@ -678,9 +816,9 @@ function drawComponents(mode){
     const n=NODES[ch],{x,y}=getXY(n,mode);
     const grp=mkEl('g');grp.style.cursor='pointer';
     grp.addEventListener('click',async()=>{
-      if(replayInProgress){abortPlayback=true;await sleep(350);}
-      abortPlayback=false;
-      clearTimeout(inputTimer);resetLights();
+      if(STATE.replayInProgress){STATE.abortPlayback=true;await sleep(350);}
+      STATE.abortPlayback=false;
+      clearTimeout(STATE.inputTimer);resetLights();
       const path=[];let c=ch;
       while(c!=='root'){path.unshift(c);c=NODES[c].parent;}
       for(const step of path){
@@ -688,7 +826,8 @@ function drawComponents(mode){
         const dur=sym==='.'?100:300;
         $(`node-${step}`)?.classList.add('active');
         $(`trace-${s.parent}-${step}`)?.classList.add('active');
-        vibrate(dur);playTone(dur,sym==='.'?'dot':'dash');
+        vibrate(dur);
+        Player.playTone(dur,sym==='.'?'dot':'dash');
         await sleep(sym==='.'?200:400);
       }
       await sleep(500);resetLights();
@@ -700,9 +839,9 @@ function drawComponents(mode){
     shape.setAttribute('class',`pad-shape ${isCircle?'circle-shape':'rect-shape'}`);
     shape.id=`node-${ch}`;
     let ty;
-    if(mode==='portrait') ty = y>=700 ? y+40 : (isCircle ? y-32 : y-30);
-    else ty = y===390 ? y+24 : (isCircle ? y-20 : y-18);
-    grp.append(shape, mkEl('text',{x,y:ty,class:'pad-text',id:`text-${ch}`},ch));
+    if(mode==='portrait') ty=y>=700?y+40:(isCircle?y-32:y-30);
+    else ty=y===390?y+24:(isCircle?y-20:y-18);
+    grp.append(shape,mkEl('text',{x,y:ty,class:'pad-text',id:`text-${ch}`},ch));
     g.appendChild(grp);
   }
 }
@@ -714,30 +853,30 @@ function applyMode(mode){
   updateBoard();
 }
 function switchMode(newMode){
-  abortPlayback=true;
-  if(pressStartTime){morseKey.classList.remove('active');stopContinuousTone();pressStartTime=0;}
+  STATE.abortPlayback=true;
+  if(STATE.pressStart){morseKey.classList.remove('active');Player.stopContinuous();STATE.pressStart=0;}
   resetLights();
   applyMode(newMode);
 }
 
-/* ===================== SETTINGS ===================== */
+/* ============ SETTINGS UI ============ */
 const modal=$('settings-modal');
 $('settings-btn').addEventListener('click',()=>modal.classList.add('open'));
 $('close-modal').addEventListener('click',()=>modal.classList.remove('open'));
 
-$('tone').value=currentTone;
-$('tone-val').textContent=currentTone;
-$('tone').addEventListener('input',e=>{currentTone=+e.target.value;$('tone-val').textContent=currentTone;saveSettings();});
+$('tone').value=SETTINGS.tone;
+$('tone-val').textContent=SETTINGS.tone;
+$('tone').addEventListener('input',e=>{SETTINGS.tone=+e.target.value;$('tone-val').textContent=SETTINGS.tone;saveSettings();});
 
-$('vol').value=Math.round(currentVolume*100);
-$('vol-val').textContent=Math.round(currentVolume*100);
-$('vol').addEventListener('input',e=>{currentVolume=+e.target.value/100;$('vol-val').textContent=+e.target.value;saveSettings();});
+$('vol').value=Math.round(SETTINGS.volume*100);
+$('vol-val').textContent=Math.round(SETTINGS.volume*100);
+$('vol').addEventListener('input',e=>{SETTINGS.volume=+e.target.value/100;$('vol-val').textContent=+e.target.value;saveSettings();});
 
-$('dot-val').textContent=dotThreshold;
+$('dot-val').textContent=SETTINGS.dotThreshold;
 $('dot-btn').addEventListener('click',()=>{
-  const i=DOT_VALUES.indexOf(dotThreshold);
-  dotThreshold=DOT_VALUES[(i+1)%DOT_VALUES.length];
-  $('dot-val').textContent=dotThreshold;
+  const i=DOT_VALUES.indexOf(SETTINGS.dotThreshold);
+  SETTINGS.dotThreshold=DOT_VALUES[(i+1)%DOT_VALUES.length];
+  $('dot-val').textContent=SETTINGS.dotThreshold;
   saveSettings();
   vibrate(30);
 });
@@ -749,57 +888,69 @@ function updateToggle(btn,on){
 const vibroBtn=$('vibro-toggle'),torchBtn=$('torch-toggle'),twoKeysBtn=$('twokeys-toggle');
 
 vibroBtn.disabled=!canVibrate;
-updateToggle(vibroBtn,vibroEnabled&&canVibrate);
+updateToggle(vibroBtn,SETTINGS.vibro&&canVibrate);
 vibroBtn.addEventListener('click',()=>{
   if(!canVibrate) return;
-  vibroEnabled=!vibroEnabled;
-  storage.setItem('vibro',vibroEnabled?'1':'0');
-  updateToggle(vibroBtn,vibroEnabled);
-  if(vibroEnabled) navigator.vibrate?.(60);
+  SETTINGS.vibro=!SETTINGS.vibro;
+  storage.setItem(STORAGE_KEYS.vibro,SETTINGS.vibro?'1':'0');
+  updateToggle(vibroBtn,SETTINGS.vibro);
+  if(SETTINGS.vibro) navigator.vibrate?.(60);
 });
 
-updateToggle(torchBtn,torchEnabled);
-torchBtn.addEventListener('click',async()=>{
-  if(torchEnabled){
-    torchEnabled=false;storage.setItem('torch','0');
-    updateToggle(torchBtn,false);
-    $('ind-torch').classList.remove('on');
-    torchOffHold();setTimeout(releaseTorch,150);
-  } else {
-    const ok=await ensureTorch();
-    if(!ok){setStatus('Фонарик недоступен');return;}
-    torchEnabled=true;storage.setItem('torch','1');
-    updateToggle(torchBtn,true);
-    $('ind-torch').classList.add('on');
-    setTorch(true);setTimeout(()=>{if(!flashTimer)setTorch(false);},300);
-  }
-});
+// X1: iOS — фонарик через applyConstraints не поддерживается
+if(isIOS){
+  $('torch-row').style.display='none';
+  SETTINGS.torch=false;
+  storage.setItem(STORAGE_KEYS.torch,'0');
+} else {
+  updateToggle(torchBtn,SETTINGS.torch);
+  torchBtn.addEventListener('click',async()=>{
+    if(SETTINGS.torch){
+      SETTINGS.torch=false;storage.setItem(STORAGE_KEYS.torch,'0');
+      updateToggle(torchBtn,false);
+      $('ind-torch').classList.remove('on');
+      torchOffHold();
+      setTimeout(releaseTorch,150);
+    } else {
+      const ok=await ensureTorch();
+      if(!ok){setStatus('Фонарик недоступен');return;}
+      SETTINGS.torch=true;storage.setItem(STORAGE_KEYS.torch,'1');
+      updateToggle(torchBtn,true);
+      $('ind-torch').classList.add('on');
+      setTorch(true);
+      setTimeout(()=>{if(!STATE.torchFlashTimer)setTorch(false);},300);
+    }
+  });
+}
 
 function applyTwoKeyMode(){
-  controlsRight.classList.toggle('two-keys',twoKeyMode);
-  updateToggle(twoKeysBtn,twoKeyMode);
+  controlsRight.classList.toggle('two-keys',SETTINGS.twoKeys);
+  updateToggle(twoKeysBtn,SETTINGS.twoKeys);
 }
-updateToggle(twoKeysBtn,twoKeyMode);
+updateToggle(twoKeysBtn,SETTINGS.twoKeys);
 twoKeysBtn.addEventListener('click',()=>{
-  twoKeyMode=!twoKeyMode;
-  storage.setItem('twoKeys',twoKeyMode?'1':'0');
+  SETTINGS.twoKeys=!SETTINGS.twoKeys;
+  storage.setItem(STORAGE_KEYS.twoKeys,SETTINGS.twoKeys?'1':'0');
   applyTwoKeyMode();
 });
 
 const setStatus=msg=>$('status').textContent=msg;
 
-/* ===================== SAFETY ===================== */
+/* ============ SAFETY ============ */
 function safetyStop(){
-  if(pressStartTime){morseKey.classList.remove('active');stopContinuousTone();pressStartTime=0;}
-  if(resetTimer){clearTimeout(resetTimer);resetTimer=null;}
-  if(antennaTimer){clearTimeout(antennaTimer);antennaTimer=null;}
+  if(STATE.pressStart){morseKey.classList.remove('active');Player.stopContinuous();STATE.pressStart=0;}
+  if(STATE.resetTimer){clearTimeout(STATE.resetTimer);STATE.resetTimer=null;}
+  if(STATE.antennaTimer){clearTimeout(STATE.antennaTimer);STATE.antennaTimer=null;}
   setAntennaInputting(false);
-  torchOffHold();stopKeyVibrate();looping=false;abortPlayback=true;
+  torchOffHold();
+  stopKeyVibrate();
+  STATE.looping=false;
+  STATE.abortPlayback=true;
 }
 window.addEventListener('blur',safetyStop);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)safetyStop();});
 
-/* ===================== ORIENTATION ===================== */
+/* ============ ORIENTATION ============ */
 let resizeTimer=null;
 function detectMode(){return window.matchMedia('(orientation: portrait)').matches?'portrait':'landscape';}
 window.addEventListener('resize',()=>{
@@ -807,7 +958,7 @@ window.addEventListener('resize',()=>{
   resizeTimer=setTimeout(()=>{const m=detectMode();if(m!==currentMode) switchMode(m);},150);
 });
 
-/* ===================== PWA ===================== */
+/* ============ PWA ============ */
 (function(){
   const installBtn=$('install-btn'),iosHint=$('ios-hint');
   if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone) return;
@@ -816,28 +967,47 @@ window.addEventListener('resize',()=>{
   installBtn.addEventListener('click',async()=>{
     if(!deferredPrompt) return;
     installBtn.classList.remove('visible');
-    deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt=null;
   });
   window.addEventListener('appinstalled',()=>{installBtn.classList.remove('visible');deferredPrompt=null;});
-  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
   if(isIOS&&!storage.getItem('iosHintShown')){
     setTimeout(()=>{iosHint.classList.add('visible');storage.setItem('iosHintShown','1');},2500);
     $('close-ios-hint').addEventListener('click',()=>iosHint.classList.remove('visible'));
   }
 })();
 
+/* ============ SERVICE WORKER ============ */
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    if(location.protocol==='https:'||location.hostname==='localhost')
-      navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('[SW]',e));
+    if(location.protocol==='https:'||location.hostname==='localhost'){
+      navigator.serviceWorker.register('./sw.js').then(reg=>{
+        // Проверка обновлений при возврате в таб
+        document.addEventListener('visibilitychange',()=>{
+          if(!document.hidden) reg.update().catch(()=>{});
+        });
+        // Периодическая проверка раз в 30 минут
+        setInterval(()=>reg.update().catch(()=>{}),30*60*1000);
+        // Лог нового SW
+        reg.addEventListener('updatefound',()=>{
+          const nw=reg.installing;
+          nw?.addEventListener('statechange',()=>{
+            if(nw.state==='installed'&&navigator.serviceWorker.controller){
+              console.log('[SW] New version installed — reload to apply');
+            }
+          });
+        });
+      }).catch(e=>console.warn('[SW]',e));
+    }
   });
 }
 
-/* ===================== INIT ===================== */
+/* ============ INIT ============ */
 loadSettings();
 loadState();
 stateLoaded=true;
-if(torchEnabled) $('ind-torch').classList.add('on');
+if(SETTINGS.torch&&!isIOS) $('ind-torch').classList.add('on');
 applyTwoKeyMode();
 window.addEventListener('keydown',kbKeyDown);
 window.addEventListener('keyup',kbKeyUp);
