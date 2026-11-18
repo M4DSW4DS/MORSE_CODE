@@ -20,15 +20,13 @@
 body{margin:0;height:100dvh;background:var(--bg);color:var(--text);font-family:'Courier New',monospace;display:flex;flex-direction:column;align-items:center;overflow:hidden}
 .app-container{display:flex;flex-direction:column;width:100vw;height:100dvh}
 header{width:100%;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;z-index:10;background:var(--bg)}
-#morse-display{font-size:1.1rem;color:var(--gold);letter-spacing:6px;font-family:monospace;font-weight:bold;min-height:1.3em;text-align:center;text-shadow:0 0 10px rgba(201,162,39,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 10px;max-width:100%}
+#morse-display{font-size:.85rem;color:var(--gold);letter-spacing:2px;font-family:monospace;font-weight:bold;min-height:1.3em;text-align:center;text-shadow:0 0 10px rgba(201,162,39,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px;max-width:100%;font-variant-numeric:tabular-nums}
 #decoded{font-size:2rem;color:var(--green);min-height:1.4em;text-align:center;letter-spacing:2px;font-weight:bold;text-shadow:0 0 15px rgba(57,255,136,.4);font-family:monospace;display:flex;justify-content:center;align-items:center;gap:8px;width:100%;overflow:hidden;white-space:nowrap;padding:0 10px}
 #final-text{color:#fff;text-shadow:none;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0}
 #final-text span{transition:color .1s,text-shadow .1s,transform .15s;display:inline-block}
 #final-text span.playing{color:var(--gold-bright);text-shadow:0 0 12px var(--gold-bright);font-weight:900;transform:scale(1.15)}
 #current-char{color:var(--gold);text-shadow:0 0 10px rgba(201,162,39,.5);flex:0 0 auto}
-.ind{display:none;font-size:1em;opacity:.85;line-height:1}
-.ind.on{display:inline-block;animation:indPulse 1.2s ease-in-out infinite}
-@keyframes indPulse{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes indPulse{0%,100%{opacity:.65}50%{opacity:1}}
 .main-content{display:flex;flex:1;flex-direction:row;width:100%;overflow:hidden;position:relative}
 .spacer-left{flex:0 0 var(--control-width)}
 .controls-right{flex:0 0 var(--control-width);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:20px;padding:10px 0;z-index:10}
@@ -36,6 +34,8 @@ header{width:100%;flex:0 0 auto;display:flex;flex-direction:column;align-items:c
 #board-svg{width:100%;height:100%;max-width:100%;display:block}
 #settings-btn{position:absolute;top:10px;right:10px;z-index:50;width:40px;height:40px;cursor:pointer;fill:#7a828c;transition:fill .2s,transform .2s}
 #settings-btn:hover{fill:var(--gold);transform:rotate(45deg)}
+#ind-torch{position:absolute;top:10px;left:10px;z-index:50;width:40px;height:40px;display:none;align-items:center;justify-content:center;font-size:26px;line-height:1;pointer-events:none}
+#ind-torch.on{display:flex;filter:drop-shadow(0 0 10px var(--gold-bright));animation:indPulse 1.2s ease-in-out infinite}
 .side-btn{width:clamp(35px,7vw,50px);height:clamp(35px,7vw,50px);border-radius:50%;background:linear-gradient(to bottom,#2a3038,#1a1e24);color:var(--gold);border:2px solid #4a5058;border-bottom:5px solid #0a0c10;font-family:'Courier New',monospace;font-size:.6rem;font-weight:bold;text-align:center;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .05s,border-bottom .05s;box-shadow:0 5px 10px rgba(0,0,0,.5);padding:5px;touch-action:manipulation}
 .side-btn:active{transform:translateY(3px);border-bottom:2px solid #0a0c10}
 .main-key-btn{width:clamp(55px,11vw,80px);height:clamp(55px,11vw,80px);border-radius:50%;background:radial-gradient(circle at 35% 35%,#4a5058,#1a1e24);border:3px solid #5a6068;border-bottom:8px solid #0a0c10;box-shadow:0 10px 25px rgba(0,0,0,.8),inset 0 2px 5px rgba(255,255,255,.1);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .05s,border-bottom .05s;position:relative;touch-action:manipulation}
@@ -56,11 +56,10 @@ button.tool-btn{background:linear-gradient(to bottom,#2a3038,#1a1e24);color:var(
 button.tool-btn:active{transform:translateY(2px);border-bottom:2px solid #0a0c10}
 button.tool-btn-gold{background:linear-gradient(to bottom,var(--gold-bright),var(--gold));color:#0a0c10;border:1px solid #8a6e1a;border-bottom:4px solid #4a3810}
 button.tool-btn-gold:active{border-bottom:2px solid #4a3810}
-.beta{font-size:.7em;opacity:.7;margin-left:4px;font-weight:normal}
 #install-btn{display:none;width:100%}
 #install-btn.visible{display:block}
+.full-btn{width:100%;max-width:500px;margin:20px auto 0;display:block}
 
-/* === Техно-настройки === */
 .tech-section{font-family:'Courier New',monospace;border:1px solid #1a1e24;border-radius:10px;padding:14px 16px;background:linear-gradient(to bottom,#0e1216,#0a0c10);max-width:500px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:6px}
 .tech-row{display:grid;grid-template-columns:80px 1fr auto;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed #1a1e24}
 .tech-row:last-child{border-bottom:none;padding-bottom:2px}
@@ -79,11 +78,6 @@ button.tool-btn-gold:active{border-bottom:2px solid #4a3810}
 .toggle-btn.on{color:var(--gold-bright);border-color:var(--gold-dim)}
 .toggle-btn.on .dot-ind{background:var(--green);box-shadow:0 0 8px var(--green)}
 .toggle-btn:disabled{opacity:.35;cursor:not-allowed}
-
-.mic-btn{width:100%;max-width:500px;margin:20px auto 0;display:block}
-
-.settings{display:flex;flex-direction:column;gap:14px;margin:20px auto 0;font-size:1rem;max-width:500px;width:100%}
-.setting-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
 #status{font-size:.82rem;color:#7a828c;margin:24px auto 10px;text-align:center;max-width:500px;line-height:1.6}
 #status b{color:var(--gold)}
 
@@ -106,12 +100,11 @@ button.tool-btn-gold:active{border-bottom:2px solid #4a3810}
 #ios-hint b{color:var(--gold-bright)}
 #ios-hint .close-hint{position:absolute;top:4px;right:8px;cursor:pointer;color:#7a828c;font-weight:bold;font-size:1rem}
 
-/* ===================== ОРИЕНТАЦИЯ ===================== */
 @media (orientation: landscape) { #bg-portrait { display: none; } }
 @media (orientation: landscape) and (max-width: 1000px) { .spacer-left { display: none; } }
 @media (orientation: portrait) {
   #bg-landscape { display: none; }
-  #morse-display { font-size: 1rem; letter-spacing: 4px; }
+  #morse-display { font-size: .75rem; letter-spacing: 1.5px; }
   #decoded { font-size: 1.7rem; }
   .main-content { flex-direction: column; }
   .spacer-left { display: none; }
@@ -122,7 +115,6 @@ button.tool-btn-gold:active{border-bottom:2px solid #4a3810}
   .side-btn { width: clamp(55px,14vw,75px); height: clamp(55px,14vw,75px); font-size: .8rem; }
   .main-key-btn { width: clamp(85px,22vw,115px); height: clamp(85px,22vw,115px); }
   .antenna { stroke-width: 6; }
-  /* Two-key portrait */
   .two-keys { gap: 10px; }
   .two-keys .main-key-btn { width: clamp(70px,18vw,95px); height: clamp(70px,18vw,95px); }
   .two-keys .side-btn { width: clamp(45px,12vw,60px); height: clamp(45px,12vw,60px); font-size: .65rem; }
@@ -141,8 +133,6 @@ button.tool-btn-gold:active{border-bottom:2px solid #4a3810}
     <div id="decoded" aria-live="polite" aria-atomic="true">
       <span id="final-text"></span>
       <span id="current-char"></span>
-      <span id="ind-mic" class="ind" title="Микрофон активен" aria-label="Микрофон активен">🎤</span>
-      <span id="ind-torch" class="ind" title="Фонарик активен" aria-label="Фонарик активен">🔦</span>
     </div>
   </header>
 
@@ -150,6 +140,7 @@ button.tool-btn-gold:active{border-bottom:2px solid #4a3810}
     <div class="spacer-left"></div>
     <div class="board-container">
       <svg id="settings-btn" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+      <div id="ind-torch">🔦</div>
 
       <svg id="board-svg" viewBox="30 20 1020 440" preserveAspectRatio="xMidYMid meet">
         <g id="bg-landscape">
@@ -230,8 +221,7 @@ button.tool-btn-gold:active{border-bottom:2px solid #4a3810}
     </div>
   </div>
 
-  <button class="tool-btn mic-btn" id="btn-mic">🎤 Микрофон <span class="beta">Beta</span></button>
-  <button class="tool-btn tool-btn-gold mic-btn" id="install-btn" title="Установить на главный экран">⬇ Установить приложение</button>
+  <button class="tool-btn tool-btn-gold full-btn" id="install-btn" title="Установить на главный экран">⬇ Установить приложение</button>
 
   <div id="status">
     <b>KEY</b>: короткое — ТОЧКА, длинное — ТИРЕ<br>
@@ -352,17 +342,12 @@ async function applyTorchLoop(){
   torchBusy=true;
   while(torchTrack && torchTarget!==torchState){
     const want=torchTarget;
-    try{
-      await torchTrack.applyConstraints({advanced:[{torch:want}]});
-      torchState=want;
-    }catch{break;}
+    try{await torchTrack.applyConstraints({advanced:[{torch:want}]});torchState=want;}
+    catch{break;}
   }
   torchBusy=false;
 }
-function setTorch(on){
-  torchTarget=on;
-  applyTorchLoop();
-}
+function setTorch(on){torchTarget=on;applyTorchLoop();}
 async function ensureTorch(){
   if(torchTrack) return true;
   if(torchIniting) return false;
@@ -510,11 +495,12 @@ async function playCode(code,unit=100){
   await sleep(unit*2);
 }
 
-/* ===================== REPLAY ===================== */
+/* ===================== REPLAY (без буквы в шапке) ===================== */
 async function replayOnce(){
   if(!finalText) return;
   if(replayInProgress){abortPlayback=true;return;}
   replayInProgress=true;abortPlayback=false;
+  currentCharEl.textContent='';
   try{
     for(let i=0;i<finalText.length;i++){
       if(abortPlayback) break;
@@ -523,7 +509,6 @@ async function replayOnce(){
       const node=NODES[char];
       if(!node) continue;
       renderFinalText(i);
-      currentCharEl.textContent=char;
       highlightPath(char);
       await playCode(node.code,100);
       resetLights();
@@ -532,7 +517,6 @@ async function replayOnce(){
   }finally{
     replayInProgress=false;
     renderFinalText(-1);
-    currentCharEl.textContent='';
     resetLights();
   }
 }
@@ -584,7 +568,7 @@ morseKey.addEventListener('pointerleave',e=>{
   if(!twoKeyMode && e.pointerType==='mouse' && pressStartTime) handlePressEnd(e);
 });
 
-/* ===================== DASH KEY (two-key mode) ===================== */
+/* ===================== DASH KEY ===================== */
 dashKey.addEventListener('pointerdown',e=>{
   if(!twoKeyMode) return;
   if(e.pointerType==='mouse'&&e.button!==0) return;
@@ -641,7 +625,6 @@ async function runLoop(){
 function onAntennaTap(){
   antennaTapCount++;
   clearTimeout(antennaTimer);
-  // visual feedback
   document.querySelectorAll('.antenna').forEach(el=>{el.classList.add('active');setTimeout(()=>el.classList.remove('active'),80);});
   antennaTimer=setTimeout(()=>{
     const count=antennaTapCount;
@@ -759,7 +742,6 @@ $('dot-btn').addEventListener('click',()=>{
   vibrate(30);
 });
 
-/* Toggles */
 function updateToggle(btn,on){
   btn.classList.toggle('on',on);
   btn.querySelector('.state-txt').textContent=on?'ON':'OFF';
@@ -806,66 +788,11 @@ twoKeysBtn.addEventListener('click',()=>{
 
 const setStatus=msg=>$('status').textContent=msg;
 
-/* ===================== MICROPHONE (Beta) ===================== */
-let micStream=null,micActive=false,micAnalyser=null,micData=null;
-let micLastTone=false,micToneStart=0,micToneEnd=0,micAnimId=null;
-
-async function toggleMic(){
-  initAudio();
-  if(micActive){
-    if(micAnimId){cancelAnimationFrame(micAnimId);micAnimId=null;}
-    micStream?.getTracks().forEach(t=>t.stop());
-    micStream=null;micActive=false;
-    micLastTone=false;micToneStart=0;micToneEnd=0;
-    if(inputPath) finalizeLetter();
-    morseKey.classList.remove('blink-red');
-    $('ind-mic').classList.remove('on');
-    setStatus('Микрофон выключен');return;
-  }
-  try{
-    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-    micAnalyser=audioCtx.createAnalyser();micAnalyser.fftSize=1024;micAnalyser.smoothingTimeConstant=0.6;
-    audioCtx.createMediaStreamSource(micStream).connect(micAnalyser);
-    micData=new Uint8Array(micAnalyser.frequencyBinCount);
-    micActive=true;inputPath='';micLastTone=false;micToneStart=0;micToneEnd=0;
-    $('ind-mic').classList.add('on');
-    setStatus('Слушаю... (Beta)');
-    micAnimId=requestAnimationFrame(processMic);
-  } catch { setStatus('Ошибка микрофона (нет доступа)'); }
-}
-function processMic(){
-  if(!micActive) return;
-  micAnalyser.getByteFrequencyData(micData);
-  const binHz=audioCtx.sampleRate/micAnalyser.fftSize;
-  let maxVal=0;
-  for(let i=Math.floor(400/binHz);i<Math.floor(1200/binHz)&&i<micData.length;i++)
-    if(micData[i]>maxVal) maxVal=micData[i];
-  const present=maxVal>80,now=performance.now();
-  if(present&&!micLastTone){micToneStart=now;morseKey.classList.add('blink-red');setAntennaInputting(true);}
-  else if(!present&&micLastTone){
-    micToneEnd=now;morseKey.classList.remove('blink-red');
-    const dur=micToneEnd-micToneStart;
-    if(dur>50&&dur<500){inputPath+=dur<dotThreshold?'.':'-';updateBoard();}
-  }
-  micLastTone=present;
-  if(!present&&inputPath&&micToneEnd&&now-micToneEnd>800){finalizeLetter();micToneEnd=0;setAntennaInputting(false);}
-  micAnimId=requestAnimationFrame(processMic);
-}
-$('btn-mic').addEventListener('click',toggleMic);
-
 /* ===================== SAFETY ===================== */
 function safetyStop(){
   if(pressStartTime){morseKey.classList.remove('active');stopContinuousTone();pressStartTime=0;}
   if(resetTimer){clearTimeout(resetTimer);resetTimer=null;}
   if(antennaTimer){clearTimeout(antennaTimer);antennaTimer=null;}
-  if(micAnimId){cancelAnimationFrame(micAnimId);micAnimId=null;}
-  if(micActive){
-    micStream?.getTracks().forEach(t=>t.stop());
-    micStream=null;micActive=false;
-    micLastTone=false;micToneStart=0;micToneEnd=0;
-    morseKey.classList.remove('blink-red');
-    $('ind-mic').classList.remove('on');
-  }
   setAntennaInputting(false);
   torchOffHold();stopKeyVibrate();looping=false;abortPlayback=true;
 }
