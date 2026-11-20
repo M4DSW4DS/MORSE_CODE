@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v11';
+const CACHE_VERSION = 'v12';
 const CACHE_NAME = `morse-gadget-${CACHE_VERSION}`;
 const URLS_TO_CACHE = [
   './',
